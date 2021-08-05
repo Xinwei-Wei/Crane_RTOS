@@ -1,5 +1,7 @@
 #include "sys.h"
-#include "usart.h"	
+#include "usart.h"
+#include "led.h"
+#include "includes.h"
 ////////////////////////////////////////////////////////////////////////////////// 	 
 //如果使用ucos,则包括下面的头文件即可.
 #if SYSTEM_SUPPORT_OS
@@ -116,22 +118,22 @@ void uart_init(u32 bound){
 
 	//USART_ClearFlag(USART1, USART_FLAG_TC);
 
-#if EN_USART1_RX	
-	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//开启相关中断
-	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);//开启相关中断
+//#if EN_USART1_RX	
+//	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//开启相关中断
+//	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);//开启相关中断
 
-	//Usart1 NVIC 配置
-	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;//串口1中断通道
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//抢占优先级3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//子优先级3
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
-	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
-	
-	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =4;		//子优先级2
-	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
-	
-#endif
+//	//Usart1 NVIC 配置
+//	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;//串口1中断通道
+//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//抢占优先级3
+//	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//子优先级3
+//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
+//	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
+//	
+//	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+//	NVIC_InitStructure.NVIC_IRQChannelSubPriority =4;		//子优先级2
+//	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
+//	
+//#endif
 	
 }
 
@@ -140,41 +142,59 @@ void uart_init(u32 bound){
 void uart_putchar(USART_TypeDef* USARTx,unsigned char date)
 {
 	while (((USARTx->SR)&0X00000040)==0);
-	USARTx->DR = date;
+	USARTx->DR = (u8)date;
 }
 
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 {
-	u8 Res;
-#if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
-	OSIntEnter();    
-#endif
-	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
-	{
-		Res =USART_ReceiveData(USART1);//(USART1->DR);	//读取接收到的数据
-		
-		if((USART_RX_STA&0x8000)==0)//接收未完成
-		{
-			if(USART_RX_STA&0x4000)//接收到了0x0d
-			{
-				if(Res!=0x0a)USART_RX_STA=0;//接收错误,重新开始
-				else USART_RX_STA|=0x8000;	//接收完成了 
-			}
-			else //还没收到0X0D
-			{	
-				if(Res==0x0d)USART_RX_STA|=0x4000;
-				else
-				{
-					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
-					USART_RX_STA++;
-					if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0;//接收数据错误,重新开始接收	  
-				}		 
-			}
-		}   		 
-  } 
+//	u8 Res;
+//#if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
+//	OSIntEnter();    
+//#endif
+//	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
+//	{
+//		Res =USART_ReceiveData(USART1);//(USART1->DR);	//读取接收到的数据
+//		
+//		if((USART_RX_STA&0x8000)==0)//接收未完成
+//		{
+//			if(USART_RX_STA&0x4000)//接收到了0x0d
+//			{
+//				if(Res!=0x0a)USART_RX_STA=0;//接收错误,重新开始
+//				else USART_RX_STA|=0x8000;	//接收完成了 
+//			}
+//			else //还没收到0X0D
+//			{	
+//				if(Res==0x0d)USART_RX_STA|=0x4000;
+//				else
+//				{
+//					USART_RX_BUF[USART_RX_STA&0X3FFF]=Res ;
+//					USART_RX_STA++;
+//					if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0;//接收数据错误,重新开始接收	  
+//				}		 
+//			}
+//		}   		 
+//  } 
+//  u8 key = 0;
+//LED1 = 0;
+//  if(USART_GetITStatus(USART1,USART_IT_RXNE)!=Bit_RESET) //检查 USART 是否发生中断
+//  {
+//      USART_ClearITPendingBit(USART1,USART_IT_RXNE); // 清中断标志
+//      key=USART_ReceiveData(USART1);
+//      // save key at here.
+//  }
+//  if(USART_GetFlagStatus(USART1,USART_FLAG_ORE) == SET) // 检查 ORE 标志
+//  {
+//      USART_ClearFlag(USART1,USART_FLAG_ORE);
+//      USART_ReceiveData(USART1);
+//  }
 }
-
 
 #endif	
 
-
+int Read_Bit(void)
+{
+	OS_ERR  err;
+	while(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) == RESET)
+		OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+	return USART_ReceiveData(USART1);
+}

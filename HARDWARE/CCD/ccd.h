@@ -9,6 +9,8 @@ u16 Get_Adc_Average(u8 ch,u8 times);
 void ccd_init(void);
 void ccd_send_data(USART_TypeDef* uart_n ,u16 *dat);
 int find_line(void);
+void CCD_IO(void);
+void ccd_collect(void);
 
 #endif
 

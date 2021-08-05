@@ -43,8 +43,10 @@
 */
 
 /// 任务优先级
-#define		AppTask_LED_PRIO			4u
+#define		AppTask_Receive_PRIO		7u
 #define		AppTask_USART_PRIO			6u
+#define		AppTask_Mecanum_PRIO		5u
+#define		AppTask_CCD_PRIO			8u
 
 /*
 *********************************************************************************************************
@@ -57,13 +59,25 @@ static  OS_TCB		AppTaskStartTCB;
 static  CPU_STK		AppTaskStartStk[APP_CFG_TASK_START_STK_SIZE];
 
 /// 任务变量声明
-static  OS_TCB		AppTask_LED_TCB;
-static  CPU_STK		AppTask_LED_Stk[AppTask_Common_STK_SIZE];
+static  OS_TCB		AppTask_Receive_TCB;
+static  CPU_STK		AppTask_Receive_Stk[AppTask_Common_STK_SIZE];
 
 static  OS_TCB		AppTask_USART_TCB;
 static  CPU_STK		AppTask_USART_Stk[AppTask_Common_STK_SIZE];
 
+static  OS_TCB		AppTask_Mecanum_TCB;
+static  CPU_STK		AppTask_Mecanum_Stk[AppTask_Common_STK_SIZE];
+
+static  OS_TCB		AppTask_CCD_TCB;
+static  CPU_STK		AppTask_CCD_Stk[AppTask_Common_STK_SIZE];
+
 /// 用户变量声明
+uint16_t Res;
+u8 key;
+int pwm_x, pwm_y, pwm_w;
+float *pwm_mecanum;
+int rev[10];
+extern u16 ccd_data[128];
 
 
 /*
@@ -78,11 +92,13 @@ static  void  	AppTaskCreate	(void);
 static  void  	AppObjCreate	(void);
 
 /// 任务函数声明
-static	void  	AppTask_LED				(void *p_arg);
+static	void  	AppTask_Receive			(void *p_arg);
 static	void	AppTask_USART			(void *p_arg);
+static	void	AppTask_Mecanum			(void *p_arg);
 
 /// 用户函数声明
 static	void	DispTaskInfo(void);
+static	void	TestLED(void);
 void	Periph_Init	(void);
 
 /*
@@ -187,6 +203,7 @@ void Periph_Init()
 {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);				//设置系统中断优先级分组2
 	LED_Init();
+	KEY_Init();
 }
 
 /*
@@ -197,20 +214,24 @@ void Periph_Init()
 *********************************************************************************************************
 */
 
-static void AppTask_LED(void *p_arg)
+static void AppTask_Receive(void *p_arg)
 {
 	OS_ERR  err;
 	(void)p_arg;
-	
-	OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+	int a,b,c;
 	
 	for(;;)
 	{
-		LED1 = 0;
-        OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
-
-		LED1 = 1;
-        OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+//		if(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) != RESET)
+//		{
+//			a = Read_Bit();
+//			b = Read_Bit();
+//			c = Read_Bit();
+//			pwm_x = a;
+//			pwm_y = b;
+//			pwm_w = c;
+//		}
+        OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
 
@@ -224,10 +245,46 @@ static void AppTask_USART(void *p_arg)
 	
 	printf("Hello\r\n");
 	
-	while(1)
+	for(;;)
 	{
 		DispTaskInfo();
-		OSTimeDlyHMSM(0u, 0u, 5u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+//		printf("%d %d %d\r\n",pwm_x,pwm_y,pwm_w);
+		OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+	}
+}
+
+static void AppTask_Mecanum(void *p_arg)
+{
+	OS_ERR  err;
+	(void)p_arg;
+	
+	Motor_IO_Init();
+	TIM8_PWM_Init(500-1, 33-1);
+	
+	for(;;)
+	{
+		pwm_mecanum = moto_caculate(pwm_x, pwm_y, pwm_w);
+		Control_Dir(1, *pwm_mecanum++);
+		Control_Dir(2, *pwm_mecanum++);
+		Control_Dir(3, *pwm_mecanum++);
+		Control_Dir(4, *pwm_mecanum++);
+		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
+	}
+}
+
+static void AppTask_CCD(void *p_arg)
+{
+	OS_ERR  err;
+	(void)p_arg;
+	
+	Adc_Init();
+	CCD_IO();
+	
+	for(;;)
+	{
+		ccd_collect();
+//		ccd_send_data(USART2, ccd_data);
+		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
 
@@ -251,13 +308,13 @@ static  void  AppTaskCreate (void)
 {
     OS_ERR  os_err;
 				 
-	OSTaskCreate((OS_TCB      *)&AppTask_LED_TCB,
-                 (CPU_CHAR    *)"Task LED",
-                 (OS_TASK_PTR  ) AppTask_LED, 
+	OSTaskCreate((OS_TCB      *)&AppTask_Receive_TCB,
+                 (CPU_CHAR    *)"USART Receive",
+                 (OS_TASK_PTR  ) AppTask_Receive,
                  (void        *) 0,
-                 (OS_PRIO      ) AppTask_LED_PRIO,
-                 (CPU_STK     *)&AppTask_LED_Stk[0],
-                 (CPU_STK_SIZE ) AppTask_LED_Stk[AppTask_Common_STK_SIZE / 10u],
+                 (OS_PRIO      ) AppTask_Receive_PRIO,
+                 (CPU_STK     *)&AppTask_Receive_Stk[0],
+                 (CPU_STK_SIZE ) AppTask_Receive_Stk[AppTask_Common_STK_SIZE / 10u],
                  (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
                  (OS_MSG_QTY   ) 0u,
                  (OS_TICK      ) 0u,
@@ -266,12 +323,40 @@ static  void  AppTaskCreate (void)
                  (OS_ERR      *)&os_err);
 				 
 	OSTaskCreate((OS_TCB      *)&AppTask_USART_TCB,
-                 (CPU_CHAR    *)"Task USART",
-                 (OS_TASK_PTR  ) AppTask_USART, 
+                 (CPU_CHAR    *)"USART Send",
+                 (OS_TASK_PTR  ) AppTask_USART,
                  (void        *) 0,
                  (OS_PRIO      ) AppTask_USART_PRIO,
                  (CPU_STK     *)&AppTask_USART_Stk[0],
                  (CPU_STK_SIZE ) AppTask_USART_Stk[AppTask_Common_STK_SIZE / 10u],
+                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
+                 (OS_MSG_QTY   ) 0u,
+                 (OS_TICK      ) 0u,
+                 (void        *) 0,
+                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
+                 (OS_ERR      *)&os_err);
+				 
+	OSTaskCreate((OS_TCB      *)&AppTask_Mecanum_TCB,
+                 (CPU_CHAR    *)"Mecanum Control",
+                 (OS_TASK_PTR  ) AppTask_Mecanum,
+                 (void        *) 0,
+                 (OS_PRIO      ) AppTask_Mecanum_PRIO,
+                 (CPU_STK     *)&AppTask_Mecanum_Stk[0],
+                 (CPU_STK_SIZE ) AppTask_Mecanum_Stk[AppTask_Common_STK_SIZE / 10u],
+                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
+                 (OS_MSG_QTY   ) 0u,
+                 (OS_TICK      ) 0u,
+                 (void        *) 0,
+                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
+                 (OS_ERR      *)&os_err);
+				 
+	OSTaskCreate((OS_TCB      *)&AppTask_CCD_TCB,
+                 (CPU_CHAR    *)"CCD Read",
+                 (OS_TASK_PTR  ) AppTask_CCD,
+                 (void        *) 0,
+                 (OS_PRIO      ) AppTask_CCD_PRIO,
+                 (CPU_STK     *)&AppTask_CCD_Stk[0],
+                 (CPU_STK_SIZE ) AppTask_CCD_Stk[AppTask_Common_STK_SIZE / 10u],
                  (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
                  (OS_MSG_QTY   ) 0u,
                  (OS_TICK      ) 0u,
@@ -327,19 +412,31 @@ static void DispTaskInfo(void)
 	printf("  Prio   Used   Free   Per    CPU    Taskname\r\n");
 
 	/* 遍历任务控制块列表(TCB list)，打印所有的任务的优先级和名称 */
-	while (p_tcb != (OS_TCB *)0) 
+	while (p_tcb != (OS_TCB *)0)
 	{
 		CPU = (float)p_tcb->CPUUsage / 100;
-		printf("   %2d  %5d  %5d   %02d%%   %5.2f%%   %s\r\n", 
-		p_tcb->Prio, 
-		p_tcb->StkUsed, 
-		p_tcb->StkFree, 
+		printf("   %2d  %5d  %5d    %02d%%  %5.2f%%   %s\r\n",
+		p_tcb->Prio,
+		p_tcb->StkUsed,
+		p_tcb->StkFree,
 		(p_tcb->StkUsed * 100) / (p_tcb->StkUsed + p_tcb->StkFree),
 		CPU,
-		p_tcb->NamePtr);		
+		p_tcb->NamePtr);
 	 	
 		CPU_CRITICAL_ENTER();
         p_tcb = p_tcb->DbgNextPtr;
         CPU_CRITICAL_EXIT();
 	}
+	printf("\r\n");
+}
+
+static void TestLED(void)
+{
+	OS_ERR  err;
+	
+	OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+	LED1 = 0;
+
+	OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+	LED1 = 1;
 }

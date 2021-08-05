@@ -2,21 +2,22 @@
 #include "led.h"
 #include "usart.h"
 
-void Motor_IO_Init(void){
-	
+void Motor_IO_Init(void)
+{
 	GPIO_InitTypeDef  GPIO_InitStructure;	
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);//使能GPIOF时钟
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_4 | GPIO_Pin_3;//PC4对应IO口
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
 	GPIO_Init(GPIOC, &GPIO_InitStructure);//初始化GPIO
-	motor_l=0;
-	motor_r=0;
-	
+	Mecanum1_Dir_Pin = 0;
+	Mecanum2_Dir_Pin = 0;
+	Mecanum3_Dir_Pin = 0;
+	Mecanum4_Dir_Pin = 0;
 }
 
 //TIM5 PWM部分初始化 
@@ -63,17 +64,17 @@ void TIM5_PWM_Init(u32 arr,u32 psc)
 }  
 
 //定时器8的PWM输出（复用）
-//通道1 PB6
-//通道2 PB7
-//通道3 PB8
-//通道4 PB9
+//通道1 PC6
+//通道2 PC7
+//通道3 PC8
+//通道4 PC9
 void TIM8_PWM_Init(u16 arr, u16 psc)
 {
 	GPIO_InitTypeDef        GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef       TIM_OCInitStructure;
 	
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8,ENABLE);  	//TIM4时钟使能    
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8,ENABLE);  	//TIM8时钟使能    
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE); 	//使能PORTB时钟	
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource6,GPIO_AF_TIM8);
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource7,GPIO_AF_TIM8);
@@ -82,7 +83,7 @@ void TIM8_PWM_Init(u16 arr, u16 psc)
 	
 	//引脚初始化
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 |GPIO_Pin_8 | GPIO_Pin_9;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;  
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;      //推挽复用输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        //上拉
@@ -94,12 +95,12 @@ void TIM8_PWM_Init(u16 arr, u16 psc)
 	TIM_TimeBaseStructure.TIM_Prescaler=psc;  //定时器分频
 	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up; //向上计数模式
 	TIM_TimeBaseStructure.TIM_Period=arr;   //自动重装载值
-	TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1; 
+	TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	
 	TIM_TimeBaseInit(TIM8,&TIM_TimeBaseStructure);//初始化定时器8
 	
-	//初始化TIM14 Channel1 PWM模式	 
+	//初始化TIM8 Channel1 PWM模式	 
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2; //选择定时器模式:TIM脉冲宽度调制模式2
  	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
 	TIM_OCInitStructure.TIM_Pulse = 0;
@@ -119,16 +120,20 @@ void TIM8_PWM_Init(u16 arr, u16 psc)
 	TIM_Cmd(TIM8, ENABLE);
 	TIM_CtrlPWMOutputs(TIM8, ENABLE);
 	TIM_SetCompare1(TIM8, 0);
+	TIM_SetCompare2(TIM8, 0);
+	TIM_SetCompare3(TIM8, 0);
+	TIM_SetCompare4(TIM8, 0);
 }
 
 //@param: duty	0~100
-void TIM8_PWM_SetDuty(int channel, double duty)
+void Mecanum_PWM_SetDuty(int channel, double duty)
 {
-	if(channel==1)
-		TIM_SetCompare1(TIM8, duty*5.0);
-	else if(channel==2)
-		TIM_SetCompare2(TIM8, duty*5.0);
-	else if(channel==3)
-		TIM_SetCompare3(TIM8, duty*5.0);
+	switch(channel)
+	{
+		case 1: TIM_SetCompare1(TIM8, duty*5.0); break;
+		case 2: TIM_SetCompare2(TIM8, duty*5.0); break;
+		case 3: TIM_SetCompare3(TIM8, duty*5.0); break;
+		case 4: TIM_SetCompare4(TIM8, duty*5.0); break;
+		default: break;
+	}
 }
-

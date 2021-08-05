@@ -12,10 +12,10 @@
 */
 
 
-#define key1  PEin(9) 
-#define key2  PEin(10) 
+#define key1  PEin(4) 
+#define key2  PEin(3) 
 #define key3  PEin(11) 
-#define key4  PEin(12) 
+#define key4  PAin(0) 
 
 void KEY_Init(void);
 u8 KEY_Scan(u8 mode);

@@ -49,8 +49,6 @@ void  ccd_Init(void)
 
 }				  
 
-
-
 void TIM7_Int_Init(u16 arr,u16 psc)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
@@ -85,14 +83,13 @@ void CCD_IO(void)
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能GPIOA时钟
 
-  //GPIOA7初始化设置
+	//GPIOA7初始化设置
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12;//PA对应IO口
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
 	GPIO_Init(GPIOA, &GPIO_InitStructure);//初始化GPIO
-	
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -124,8 +121,8 @@ void ccd_collect(void)
     {
         CCD_CLK=0;
         //这里可以同时采集两个CCD数据
-        ccd_data[i] =  Get_Adc(5);
-        //ccd_data_two[i] = adc_convert(AD_CHANNEL, AD_RESOLUTION);
+        ccd_data[i] = Get_Adc1();
+//        ccd_data_two[i] = adc_convert(AD_CHANNEL, AD_RESOLUTION);
         CCD_CLK=1;
     }
 
