@@ -77,7 +77,7 @@ u8 key;
 int pwm_x, pwm_y, pwm_w;
 float *pwm_mecanum;
 int rev[10];
-extern u16 ccd_data[128];
+extern u16 ccd1_data[128];
 
 
 /*
@@ -277,14 +277,13 @@ static void AppTask_CCD(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	
-	Adc_Init();
-	CCD_IO();
+	CCD_Init();
 	uart_init(115200);
 	
 	for(;;)
 	{
-		ccd_collect();
-		ccd_send_data(USART2, ccd_data);
+		CCD_Collect();
+		ccd_send_data(USART2, ccd1_data);
 		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }

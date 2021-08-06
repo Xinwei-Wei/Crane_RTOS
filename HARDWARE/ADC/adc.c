@@ -27,7 +27,7 @@ ADC			1 	2 	3
 入口参数：无
 返回值	：无
 *****************************************************************/
-void  Adc_Init(void)
+void Adc_Init(void)
 {    
 	GPIO_InitTypeDef  		GPIO_InitStructure;
 	ADC_CommonInitTypeDef 	ADC_CommonInitStructure;
@@ -80,7 +80,7 @@ void  Adc_Init(void)
 u16 Get_Adc1(void)
 {
 	//设置指定ADC的规则组通道，一个序列，采样时间
-	ADC_RegularChannelConfig(ADC1, 0, 1, ADC_SampleTime_3Cycles );	//ADC1通道0,480个周期,提高采样时间可以提高精确度			    
+	ADC_RegularChannelConfig(ADC1, 0, 1, ADC_SampleTime_480Cycles);	//ADC1通道0,480个周期,提高采样时间可以提高精确度			    
   
 	ADC_SoftwareStartConv(ADC1);					//使能指定的ADC1的软件转换启动功能	
 	 
