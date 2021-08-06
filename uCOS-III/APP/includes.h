@@ -117,6 +117,7 @@
 #include "pid.h"
 #include "tf-luna.h"
 #include "mecanum_control.h"
+#include "encoder.h"
 
 /*
 *********************************************************************************************************

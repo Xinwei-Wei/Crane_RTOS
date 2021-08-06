@@ -76,6 +76,9 @@ uint16_t Res;
 u8 key;
 int pwm_x, pwm_y, pwm_w;
 float *pwm_mecanum;
+float *target_mecanum;
+struct IncrementalPID rightfront_pid, leftfront_pid, rightrear_pid, leftrear_pid;
+float rightfront_pwm, leftfront_pwm, rightrear_pwm, leftrear_pwm;
 int rev[10];
 extern u16 ccd1_data[128];
 extern u16 ccd2_data[128];
@@ -262,13 +265,37 @@ static void AppTask_Mecanum(void *p_arg)
 	Motor_IO_Init();
 	TIM8_PWM_Init(500-1, 33-1);
 	
+	incremental_pid_init(&rightfront_pid,0.4, 0, 0);
+	incremental_pid_init(&leftfront_pid, 0.4, 0, 0);
+	incremental_pid_init(&rightrear_pid,0.4, 0, 0);
+	incremental_pid_init(&leftrear_pid, 0.4, 0, 0);
+	
 	for(;;)
 	{
-		pwm_mecanum = moto_caculate(pwm_x, pwm_y, pwm_w);
-		Control_Dir(1, *pwm_mecanum++);
-		Control_Dir(2, *pwm_mecanum++);
-		Control_Dir(3, *pwm_mecanum++);
-		Control_Dir(4, *pwm_mecanum++);
+		target_mecanum = moto_caculate(pwm_x, pwm_y, pwm_w);
+		
+		rightfront_pid.error = *target_mecanum-TIM2->CNT*0.001;
+		TIM2->CNT = 0;
+		target_mecanum++;		
+		leftfront_pid.error = *target_mecanum-TIM3->CNT*0.001;
+		TIM3->CNT = 0;
+		target_mecanum++;	
+		rightrear_pid.error = *target_mecanum-TIM4->CNT*0.001;
+		TIM4->CNT = 0;	
+		target_mecanum++;			
+		leftrear_pid.error = *target_mecanum-TIM5->CNT*0.001;
+		target_mecanum++;	
+		TIM5->CNT = 0;
+		
+		rightfront_pwm += incremental_pid(&rightfront_pid);
+		leftfront_pwm += incremental_pid(&leftfront_pid);
+		rightrear_pwm += incremental_pid(&rightrear_pid);
+		leftrear_pwm += incremental_pid(&leftrear_pid);
+		
+		Control_Dir(1, rightfront_pwm);
+		Control_Dir(2, leftfront_pwm);
+		Control_Dir(3, rightrear_pwm);
+		Control_Dir(4, leftrear_pwm);
 		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -288,6 +315,7 @@ static void AppTask_CCD(void *p_arg)
 		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
+
 
 /*
 *********************************************************************************************************
