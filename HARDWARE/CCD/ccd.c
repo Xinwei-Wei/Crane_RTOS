@@ -6,12 +6,13 @@
 
 #define CCD1_CLK  	PAout(11)
 #define CCD1_SI		PAout(12)
-#define CCD2_CLK
-#define CCD2_CLK
+#define CCD2_CLK	PDout(11)
+#define CCD2_SI		PDout(12)
 #define threshold  300
 
-u8 ccd1_finish_flag;
+u8 ccd_finish_flag;
 u16 ccd1_data[128];
+u16 ccd2_data[128];
 
 void CCD_Init(void)
 {
@@ -25,15 +26,17 @@ void CCD_IO(void)
 {    	 
 	GPIO_InitTypeDef  GPIO_InitStructure;	
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能GPIOA时钟
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);	//使能GPIOA时钟
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);	//使能GPIOD时钟
 
-	//GPIOA7初始化设置
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12;//PA对应IO口
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//100MHz
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-	GPIO_Init(GPIOA, &GPIO_InitStructure);//初始化GPIO
+	//GPIOA初始化设置
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12;//CCD1对应IO口
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;			//普通输出模式
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;			//推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		//50MHz
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;			//上拉
+	GPIO_Init(GPIOA, &GPIO_InitStructure);					//初始化GPIOA
+	GPIO_Init(GPIOD, &GPIO_InitStructure);					//初始化GPIOD
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -55,23 +58,31 @@ void CCD_Collect(void)
     u8 i = 0;
 
     CCD1_CLK=1;
+	CCD2_CLK=1;
     CCD1_SI=0;
+	CCD2_SI=0;
     CCD1_CLK=0;
+	CCD2_CLK=0;
     CCD1_SI=1;
+	CCD2_SI=1;
     CCD1_CLK=1;
+	CCD2_CLK=1;
     CCD1_SI=0;
+	CCD2_SI=0;
 
     for(i=0;i<128;i++)
     {
         CCD1_CLK=0;
+		CCD2_CLK=0;
         //这里可以同时采集两个CCD数据
         ccd1_data[i] = Get_Adc1();
-//        ccd_data_two[i] = adc_convert(AD_CHANNEL, AD_RESOLUTION);
+		ccd2_data[i] = Get_Adc2();
         CCD1_CLK=1;
+		CCD2_CLK=1;
     }
 
     //采集完成标志位置1
-    ccd1_finish_flag = 1;
+    ccd_finish_flag = 1;
 }
 
 //-------------------------------------------------------------------------------------------------------------------

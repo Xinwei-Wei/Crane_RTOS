@@ -78,6 +78,7 @@ int pwm_x, pwm_y, pwm_w;
 float *pwm_mecanum;
 int rev[10];
 extern u16 ccd1_data[128];
+extern u16 ccd2_data[128];
 
 
 /*

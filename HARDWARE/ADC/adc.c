@@ -64,7 +64,7 @@ void Adc_Init(void)
 	
 	ADC_InitStructure.ADC_NbrOfConversion = 1;				//使用规则通道1
 	ADC_Init(ADC1, &ADC_InitStructure);						//ADC1初始化
-	ADC_InitStructure.ADC_NbrOfConversion = 2;				//使用规则通道2
+//	ADC_InitStructure.ADC_NbrOfConversion = 1;				//使用规则通道1
 	ADC_Init(ADC2, &ADC_InitStructure);						//ADC2初始化
 	
 	ADC_Cmd(ADC1, ENABLE);	//开启ADC1
@@ -92,7 +92,7 @@ u16 Get_Adc1(void)
 u16 Get_Adc2(void)
 {
 	//设置指定ADC的规则组通道，一个序列，采样时间
-	ADC_RegularChannelConfig(ADC2, 1, 2, ADC_SampleTime_480Cycles );	//ADC2通道1,480个周期,提高采样时间可以提高精确度			    
+	ADC_RegularChannelConfig(ADC2, 1, 1, ADC_SampleTime_480Cycles );	//ADC2通道1,480个周期,提高采样时间可以提高精确度			    
   
 	ADC_SoftwareStartConv(ADC2);					//使能指定的ADC2的软件转换启动功能	
 	 
