@@ -6,8 +6,8 @@
 
 #define CCD1_CLK  	PAout(11)
 #define CCD1_SI		PAout(12)
-#define CCD2_CLK	PDout(11)
-#define CCD2_SI		PDout(12)
+#define CCD2_CLK	PCout(11)
+#define CCD2_SI		PCout(12)
 #define threshold  300
 
 u8 ccd_finish_flag;
@@ -27,7 +27,7 @@ void CCD_IO(void)
 	GPIO_InitTypeDef  GPIO_InitStructure;	
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);	//使能GPIOA时钟
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);	//使能GPIOD时钟
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);	//使能GPIOD时钟
 
 	//GPIOA初始化设置
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_12;//CCD1对应IO口
@@ -36,7 +36,7 @@ void CCD_IO(void)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		//50MHz
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;			//上拉
 	GPIO_Init(GPIOA, &GPIO_InitStructure);					//初始化GPIOA
-	GPIO_Init(GPIOD, &GPIO_InitStructure);					//初始化GPIOD
+	GPIO_Init(GPIOC, &GPIO_InitStructure);					//初始化GPIOD
 }
 
 //-------------------------------------------------------------------------------------------------------------------

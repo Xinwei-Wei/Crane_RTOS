@@ -7,7 +7,7 @@
 #include "sys.h"
 
 #define   MYUART    	 USART2
-#define   SerialBaud 	 38400
+#define   SerialBaud 	 115200
 #define   ScopeChaNum      17       //上位机通道数
 //#define   LineDataNum      128      //CCD图像宽度
 

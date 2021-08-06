@@ -34,15 +34,15 @@ void Encoder_Init_TIM2(void)
     GPIO_InitTypeDef GPIO_InitStructure;
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);//使能定时器2的时钟
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能PA端口时钟
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能PA端口时钟
 //GPIO设置为输入
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;	//端口配置
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11;	//端口配置
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF ; //浮空输入
     GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
+    GPIO_Init(GPIOB, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
 
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource0, GPIO_AF_TIM2); //
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource1, GPIO_AF_TIM2); //
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_TIM2); //
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_TIM2); //
 
 //定时器设置  （时基）
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);//配置为默认模式
@@ -65,22 +65,22 @@ void Encoder_Init_TIM2(void)
     TIM_Cmd(TIM2, ENABLE);
 }
 
-void Encoder_Init_TIM3(void)
+void Encoder_Init_TIM3(void)//PC6,PC7
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;  //时基设置
     TIM_ICInitTypeDef TIM_ICInitStructure;  //输入捕获
     GPIO_InitTypeDef GPIO_InitStructure;
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);//使能定时器2的时钟
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能PA端口时钟
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);//使能PA端口时钟
 //GPIO设置为输入
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;	//端口配置
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF ; //浮空输入
     GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
+    GPIO_Init(GPIOC, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
 
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_TIM3); //
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_TIM3); //
+    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_TIM3); //
+    GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3); //
 
 //定时器设置  （时基）
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);//配置为默认模式
@@ -145,22 +145,22 @@ void Encoder_Init_TIM2_back(void)
 入口参数：无
 返回  值：无
 **************************************************************************/
-void Encoder_Init_TIM4(void)
+void Encoder_Init_TIM4(void)//PD12,PD13
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     TIM_ICInitTypeDef TIM_ICInitStructure;
     GPIO_InitTypeDef GPIO_InitStructure;
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);//使能定时器4的时钟
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能PB端口时钟
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);//使能PB端口时钟
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;	//端口配置
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13;	//端口配置
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; //浮空输入
     GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);					      //根据设定参数初始化GPIOB
+    GPIO_Init(GPIOD, &GPIO_InitStructure);					      //根据设定参数初始化GPIOB
 
-    GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_TIM4); //第三路
-    GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_TIM4); //第四路
+    GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4); //第三路
+    GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_TIM4); //第四路
 
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_TimeBaseStructure.TIM_Prescaler = 0x0; // 预分频器
@@ -189,13 +189,13 @@ void Encoder_Init_TIM5(void)
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);//使能定时器4的时钟
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能PB端口时钟
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;	//端口配置
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;	//端口配置
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; //浮空输入
     GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);					      //根据设定参数初始化GPIOB
 
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_TIM5); //第三路
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_TIM5); //第四路
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource0, GPIO_AF_TIM5); //第三路
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource1, GPIO_AF_TIM5); //第四路
 
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_TimeBaseStructure.TIM_Prescaler = 0x0; // 预分频器

@@ -77,9 +77,10 @@ u8 key;
 int pwm_x, pwm_y, pwm_w;
 float *pwm_mecanum;
 float *target_mecanum;
+int targetspeed = 0;
 struct IncrementalPID rightfront_pid, leftfront_pid, rightrear_pid, leftrear_pid;
 float rightfront_pwm, leftfront_pwm, rightrear_pwm, leftrear_pwm;
-int rev[10];
+char rev[12];
 extern u16 ccd1_data[128];
 extern u16 ccd2_data[128];
 
@@ -208,6 +209,7 @@ void Periph_Init()
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);				//设置系统中断优先级分组2
 	LED_Init();
 	KEY_Init();
+	uart_init(115200);
 }
 
 /*
@@ -222,19 +224,19 @@ static void AppTask_Receive(void *p_arg)
 {
 	OS_ERR  err;
 	(void)p_arg;
-	int a,b,c;
+	int rev_num = 0;
 	
 	for(;;)
 	{
-//		if(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) != RESET)
-//		{
-//			a = Read_Bit();
-//			b = Read_Bit();
-//			c = Read_Bit();
-//			pwm_x = a;
-//			pwm_y = b;
-//			pwm_w = c;
-//		}
+		if(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) != RESET)
+		{
+			for(rev_num=0; rev_num<12; rev_num++)
+				rev[rev_num] = Read_Bit()-48;
+			targetspeed = rev[0]*100 + rev[1]*10 + rev[2];
+			rightfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
+			rightfront_pid.ki = rev[6] + rev[7]/10.0 + rev[8]/100.0;
+			rightfront_pid.kd = rev[9] + rev[10]/10.0 + rev[11]/100.0;
+		}
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -244,15 +246,15 @@ static void AppTask_USART(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	
-	uart_init(115200);	// 初始化串口波特率为115200
+//	uart_init(115200);	// 初始化串口波特率为115200
 	OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	
 	printf("Hello\r\n");
 	
 	for(;;)
 	{
-		DispTaskInfo();
-//		printf("%d %d %d\r\n",pwm_x,pwm_y,pwm_w);
+//		DispTaskInfo();
+		printf("%d	%.2f	%.2f	%.2f\r\n",targetspeed, rightfront_pid.kp, rightfront_pid.ki, rightfront_pid.kd);
 		OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -264,38 +266,38 @@ static void AppTask_Mecanum(void *p_arg)
 	
 	Motor_IO_Init();
 	TIM8_PWM_Init(500-1, 33-1);
+	Encoder_Init_TIM2();
+	Encoder_Init_TIM3();
+	Encoder_Init_TIM4();
+	Encoder_Init_TIM5();
 	
 	incremental_pid_init(&rightfront_pid,0.4, 0, 0);
-	incremental_pid_init(&leftfront_pid, 0.4, 0, 0);
-	incremental_pid_init(&rightrear_pid,0.4, 0, 0);
-	incremental_pid_init(&leftrear_pid, 0.4, 0, 0);
+//	incremental_pid_init(&leftfront_pid, 0.4, 0, 0);
+//	incremental_pid_init(&rightrear_pid,0.4, 0, 0);
+//	incremental_pid_init(&leftrear_pid, 0.4, 0, 0);
 	
 	for(;;)
 	{
 		target_mecanum = moto_caculate(pwm_x, pwm_y, pwm_w);
 		
-		rightfront_pid.error = *target_mecanum-TIM2->CNT*0.001;
-		TIM2->CNT = 0;
-		target_mecanum++;		
-		leftfront_pid.error = *target_mecanum-TIM3->CNT*0.001;
-		TIM3->CNT = 0;
-		target_mecanum++;	
-		rightrear_pid.error = *target_mecanum-TIM4->CNT*0.001;
-		TIM4->CNT = 0;	
-		target_mecanum++;			
-		leftrear_pid.error = *target_mecanum-TIM5->CNT*0.001;
-		target_mecanum++;	
-		TIM5->CNT = 0;
+		rightfront_pid.error = (targetspeed)-TIM2->CNT*0.001;
+		TIM2->CNT = 0;	
+//		leftfront_pid.error = (*target_mecanum++)-TIM3->CNT*0.001;
+//		TIM3->CNT = 0;
+//		leftrear_pid.error = (*target_mecanum++)-TIM4->CNT*0.001;
+//		TIM4->CNT = 0;	;			
+//		rightrear_pid.error = (*target_mecanum++)-TIM5->CNT*0.001;	
+//		TIM5->CNT = 0;
 		
 		rightfront_pwm += incremental_pid(&rightfront_pid);
-		leftfront_pwm += incremental_pid(&leftfront_pid);
-		rightrear_pwm += incremental_pid(&rightrear_pid);
-		leftrear_pwm += incremental_pid(&leftrear_pid);
+//		leftfront_pwm += incremental_pid(&leftfront_pid);
+//		leftrear_pwm += incremental_pid(&leftrear_pid);
+//		rightrear_pwm += incremental_pid(&rightrear_pid);
 		
 		Control_Dir(1, rightfront_pwm);
-		Control_Dir(2, leftfront_pwm);
-		Control_Dir(3, rightrear_pwm);
-		Control_Dir(4, leftrear_pwm);
+//		Control_Dir(2, leftfront_pwm);
+//		Control_Dir(3, leftrear_pwm);
+//		Control_Dir(4, rightrear_pwm);
 		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -306,12 +308,16 @@ static void AppTask_CCD(void *p_arg)
 	(void)p_arg;
 	
 	CCD_Init();
-	uart_init(115200);
 	
 	for(;;)
 	{
 		CCD_Collect();
 		ccd_send_data(USART2, ccd1_data);
+		
+//		push(1,targetspeed);
+//		push(2,rightfront_pid.error);
+//		push(3,rightfront_pwm);
+//		sendDataToScope();
 		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }

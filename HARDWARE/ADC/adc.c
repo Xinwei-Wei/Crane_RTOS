@@ -34,7 +34,7 @@ void Adc_Init(void)
 	ADC_InitTypeDef       	ADC_InitStructure;
 	ADC_StructInit(&ADC_InitStructure);
 	
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);	//使能GPIOA时钟
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);	//使能GPIOA时钟
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE); 	//使能ADC1时钟
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC2, ENABLE); 	//使能ADC2时钟
 
@@ -42,7 +42,7 @@ void Adc_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;			//模拟输入
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;		//不带上下拉
-	GPIO_Init(GPIOA, &GPIO_InitStructure);					//初始化GPIO
+	GPIO_Init(GPIOB, &GPIO_InitStructure);					//初始化GPIO
 
 	RCC_APB2PeriphResetCmd(RCC_APB2Periph_ADC1,ENABLE);	  	//ADC1复位
 	RCC_APB2PeriphResetCmd(RCC_APB2Periph_ADC1,DISABLE);	//复位结束
@@ -80,7 +80,7 @@ void Adc_Init(void)
 u16 Get_Adc1(void)
 {
 	//设置指定ADC的规则组通道，一个序列，采样时间
-	ADC_RegularChannelConfig(ADC1, 0, 1, ADC_SampleTime_480Cycles);	//ADC1通道0,480个周期,提高采样时间可以提高精确度			    
+	ADC_RegularChannelConfig(ADC1, 8, 1, ADC_SampleTime_480Cycles);	//ADC1通道0,480个周期,提高采样时间可以提高精确度			    
   
 	ADC_SoftwareStartConv(ADC1);					//使能指定的ADC1的软件转换启动功能	
 	 
@@ -92,7 +92,7 @@ u16 Get_Adc1(void)
 u16 Get_Adc2(void)
 {
 	//设置指定ADC的规则组通道，一个序列，采样时间
-	ADC_RegularChannelConfig(ADC2, 1, 1, ADC_SampleTime_480Cycles );	//ADC2通道1,480个周期,提高采样时间可以提高精确度			    
+	ADC_RegularChannelConfig(ADC2, 9, 1, ADC_SampleTime_480Cycles );	//ADC2通道1,480个周期,提高采样时间可以提高精确度			    
   
 	ADC_SoftwareStartConv(ADC2);					//使能指定的ADC2的软件转换启动功能	
 	 
