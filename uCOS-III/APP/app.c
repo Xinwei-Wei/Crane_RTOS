@@ -46,7 +46,7 @@
 #define		AppTask_Receive_PRIO		7u
 #define		AppTask_USART_PRIO			6u
 #define		AppTask_Mecanum_PRIO		5u
-#define		AppTask_CCD_PRIO			8u
+#define		AppTask_CCD_PRIO			3u
 
 /*
 *********************************************************************************************************
@@ -279,11 +279,12 @@ static void AppTask_CCD(void *p_arg)
 	
 	Adc_Init();
 	CCD_IO();
+	uart_init(115200);
 	
 	for(;;)
 	{
 		ccd_collect();
-//		ccd_send_data(USART2, ccd_data);
+		ccd_send_data(USART2, ccd_data);
 		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }

@@ -32,6 +32,7 @@ void  Adc_Init(void)
 	GPIO_InitTypeDef  		GPIO_InitStructure;
 	ADC_CommonInitTypeDef 	ADC_CommonInitStructure;
 	ADC_InitTypeDef       	ADC_InitStructure;
+	ADC_StructInit(&ADC_InitStructure);
 	
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);	//使能GPIOA时钟
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE); 	//使能ADC1时钟
