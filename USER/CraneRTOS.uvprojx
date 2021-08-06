@@ -10,13 +10,13 @@
       <TargetName>Crane_RTOS</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060750::V5.06 update 6 (build 750)::.\ARMCC</pCCUsed>
+      <pCCUsed>5060061::V5.06 update 1 (build 61)::ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F407VETx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.2.13.0</PackID>
+          <PackID>Keil.STM32F4xx_DFP.2.9.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
           <Cpu>IROM(0x08000000,0x00080000) IRAM(0x20000000,0x00020000) IRAM2(0x10000000,0x00010000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\SYSTEM\softiic;..\USER;..\FWLIB\inc;..\HARDWARE\OLED;..\HARDWARE\FREECARS;..\HARDWARE\ADC;..\HARDWARE\KEY;..\HARDWARE\PWM;..\HARDWARE\LED;..\HARDWARE\HC05;..\HARDWARE\EXTI;..\HARDWARE\BEEP;..\HARDWARE\MENU;..\HARDWARE\HC-SR04;..\HARDWARE\CCD;..\HARDWARE\Filter_Mathod;..\HARDWARE\ADC;..\HARDWARE\TF-Luna;..\uCOS-III\uC-CPU;..\uCOS-III\uC-CPU\ARM-Cortex-M4\RealView;..\uCOS-III\uC-LIB;..\uCOS-III\uC-LIB\Ports\ARM-Cortex-M4\RealView;..\uCOS-III\uCOS-III\Ports\ARM-Cortex-M4\Generic\RealView;..\uCOS-III\APP;..\uCOS-III\BSP;..\uCOS-III\uCOS-III\Source;..\HARDWARE\PID;..\HARDWARE\Mecanum</IncludePath>
+              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\SYSTEM\softiic;..\USER;..\FWLIB\inc;..\HARDWARE\OLED;..\HARDWARE\FREECARS;..\HARDWARE\ADC;..\HARDWARE\KEY;..\HARDWARE\PWM;..\HARDWARE\LED;..\HARDWARE\HC05;..\HARDWARE\EXTI;..\HARDWARE\BEEP;..\HARDWARE\MENU;..\HARDWARE\HC-SR04;..\HARDWARE\CCD;..\HARDWARE\Filter_Mathod;..\HARDWARE\ADC;..\HARDWARE\TF-Luna;..\uCOS-III\uC-CPU;..\uCOS-III\uC-CPU\ARM-Cortex-M4\RealView;..\uCOS-III\uC-LIB;..\uCOS-III\uC-LIB\Ports\ARM-Cortex-M4\RealView;..\uCOS-III\uCOS-III\Ports\ARM-Cortex-M4\Generic\RealView;..\uCOS-III\APP;..\uCOS-III\BSP;..\uCOS-III\uCOS-III\Source;..\HARDWARE\PID;..\HARDWARE\Mecanum;..\HARDWARE\ENCODER</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -685,6 +685,11 @@
               <FileName>mecanum_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\Mecanum\mecanum_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\ENCODER\encoder.c</FilePath>
             </File>
           </Files>
         </Group>
