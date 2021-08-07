@@ -272,56 +272,42 @@ static void AppTask_Mecanum(void *p_arg)
 	Encoder_Init_TIM5();
 	
 	incremental_pid_init(&rightfront_pid, 0.3, 0.5, 0.3);
-//	incremental_pid_init(&leftfront_pid, 0.3, 0.5, 0.3);
+	incremental_pid_init(&leftfront_pid, 0.3, 0.5, 0.3);	
+	incremental_pid_init(&leftrear_pid, 0.3, 0.5, 0.3);
 	incremental_pid_init(&rightrear_pid, 0.3, 0.5, 0.3);
-//	incremental_pid_init(&leftrear_pid, 0.3, 0.5, 0.3);
 	
 	for(;;)
 	{
 		target_mecanum = moto_caculate(pwm_x, pwm_y, pwm_w);
 		
-		if(rightfront_pwm < 0)
-			rightfront_pid.error = (targetspeed)-100+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;
-		else
-			rightfront_pid.error = (targetspeed)-100-((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;		
+		rightfront_pid.error = (targetspeed)-100-((TIM2->CNT < 0xffffffff-TIM2->CNT)?TIM2->CNT:TIM2->CNT-0xffffffff)*1.5;	
 		TIM2->CNT = 0;	
-//		if(leftfront_pwm < 0)
-//			leftfront_pid.error = (targetspeed)-100+((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM2->CNT)*1.5;
-//		else
-//			leftfront_pid.error = (targetspeed)-100-((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM2->CNT)*1.5;		
-//		TIM3->CNT = 0;	
-		if(leftrear_pwm < 0)
-			leftrear_pid.error = (targetspeed)+100+((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;
-		else
-			leftrear_pid.error = (targetspeed)+100-((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;		
-		TIM4->CNT = 0;	
-		leftrear_pid.error = 50;
-//		if(rightrear_pwm < 0)
-//			rightrear_pid.error = (targetspeed)-100+((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;
-//		else
-//			rightrear_pid.error = (targetspeed)-100-((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;		
-//		TIM5->CNT = 0;	
+		leftfront_pid.error = (targetspeed)-100-((TIM3->CNT < 0xffff-TIM3->CNT)?TIM3->CNT:TIM3->CNT-0xffff)*1.5;	
+		TIM3->CNT = 0;
+		leftrear_pid.error = (targetspeed)-100-((TIM4->CNT < 0xffff-TIM4->CNT)?TIM4->CNT:TIM4->CNT-0xffff)*1.5;	
+		TIM4->CNT = 0;
+		rightrear_pid.error = (targetspeed)-100-((TIM5->CNT < 0xffffffff-TIM5->CNT)?TIM5->CNT:TIM5->CNT-0xffffffff)*1.5;	
+		TIM5->CNT = 0;
 
 		rightfront_pwm += incremental_pid(&rightfront_pid);
-//		leftfront_pwm += incremental_pid(&leftfront_pid);
+		leftfront_pwm += incremental_pid(&leftfront_pid);
 		leftrear_pwm += incremental_pid(&leftrear_pid);
-//		rightrear_pwm += incremental_pid(&rightrear_pid);
-		
+		rightrear_pwm += incremental_pid(&rightrear_pid);
 		
 		if(rightfront_pwm > 80)	rightfront_pwm = 80;
 		else if(rightfront_pwm < -80)	rightfront_pwm = -80;
-//		if(leftfront_pwm > 80)	leftfront_pwm = 80;
-//		else if(leftfront_pwm < -80)	leftfront_pwm = -80;
+		if(leftfront_pwm > 80)	leftfront_pwm = 80;
+		else if(leftfront_pwm < -80)	leftfront_pwm = -80;
 		if(leftrear_pwm > 80)	leftrear_pwm = 80;
 		else if(leftrear_pwm < -80)	leftrear_pwm = -80;
-//		if(rightrear_pwm > 80)	rightrear_pwm = 80;
-//		else if(rightrear_pwm < -80)		rightrear_pwm = -80;
+		if(rightrear_pwm > 80)	rightrear_pwm = 80;
+		else if(rightrear_pwm < -80)		rightrear_pwm = -80;
 
 		
 		Control_Dir(1, rightfront_pwm);
-//		Control_Dir(2, leftfront_pwm);
+		Control_Dir(2, leftfront_pwm);
 		Control_Dir(3, leftrear_pwm);
-//		Control_Dir(4, rightrear_pwm);
+		Control_Dir(4, rightrear_pwm);
 		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
