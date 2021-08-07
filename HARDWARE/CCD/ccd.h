@@ -12,6 +12,7 @@ int find_line(void);
 void CCD_IO(void);
 void CCD_Collect(void);
 void CCD_Init(void);
+int Find_Line(u16 *data, int center, int threshold);
 
 #endif
 

@@ -8,7 +8,7 @@
 #define CCD1_SI		PAout(12)
 #define CCD2_CLK	PCout(11)
 #define CCD2_SI		PCout(12)
-#define threshold  300
+#define threshold1  2700
 
 u8 ccd_finish_flag;
 u16 ccd1_data[128];
@@ -121,7 +121,7 @@ int find_line(void)
 	u8 i;
 	for(i=0;i<128;i++)
 	{
-		if(ccd1_data[i] > threshold && ccd1_data[i+1]>threshold && ccd1_data[i+2] > threshold)
+		if(ccd1_data[i] > 2700 && ccd1_data[i+1]>2700 && ccd1_data[i+2] > 2700)
 		{
 			return i;
 			
@@ -129,3 +129,49 @@ int find_line(void)
 	}
 	return -1;	
 }
+
+int Find_Line(u16 *data, int center, int threshold)
+{
+	int i, emergency_flag = 0, edge_count = 0, edge_left = 0, edge_right = 127;
+	
+	for(i=center-2; i<=center+2; i++)
+	{
+		if(data[i] > threshold)
+		{
+			emergency_flag = 1;
+			break;
+		}
+	}
+	
+	if(emergency_flag == 0)
+	{
+		for(i=center-3; i>=0; i--)
+		{
+			if(data[i] > threshold)
+				edge_count++;
+			if(edge_count == 3)
+				break;
+		}
+		edge_left = i+3;
+		edge_count = 0;
+		
+		for(i=center+3; i<=127; i++)
+		{
+			if(data[i] > threshold)
+				edge_count++;
+			if(edge_count == 3)
+				break;
+		}
+		edge_right = i-3;
+		edge_count = 0;
+		
+		center = (edge_left + edge_right) / 2 + 0.5;
+		return center;
+	}
+	else
+	{
+		// TODO 中心偏离时的紧急方案，全局扫描
+		return center;
+	}
+}
+		

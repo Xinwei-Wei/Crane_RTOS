@@ -43,10 +43,10 @@
 */
 
 /// 任务优先级
-#define		AppTask_Receive_PRIO		7u
-#define		AppTask_USART_PRIO			6u
-#define		AppTask_Mecanum_PRIO		5u
-#define		AppTask_CCD_PRIO			3u
+#define		AppTask_Receive_PRIO		6u
+#define		AppTask_USART_PRIO			7u
+#define		AppTask_Mecanum_PRIO		4u
+#define		AppTask_CCD_PRIO			5u
 
 /*
 *********************************************************************************************************
@@ -72,17 +72,18 @@ static  OS_TCB		AppTask_CCD_TCB;
 static  CPU_STK		AppTask_CCD_Stk[AppTask_Common_STK_SIZE];
 
 /// 用户变量声明
-uint16_t Res;
 u8 key;
 int pwm_x, pwm_y, pwm_w;
 float *pwm_mecanum;
-float *target_mecanum;
 int targetspeed = 0;
 struct IncrementalPID rightfront_pid, leftfront_pid, rightrear_pid, leftrear_pid;
 float rightfront_pwm, leftfront_pwm, rightrear_pwm, leftrear_pwm;
 char rev[12];
 extern u16 ccd1_data[128];
 extern u16 ccd2_data[128];
+float *targetMecanum;
+float targetSpeedX = 0, targetSpeedY = 0, targetSpeedW = 0;
+int ccd1_center = 64, ccd2_center = 64;
 
 
 /*
@@ -122,7 +123,6 @@ void	Periph_Init	(void);
 int main(void)
 {
     OS_ERR  err;
-
 
     BSP_IntDisAll();                                            /* Disable all interrupts.                              */
     
@@ -207,7 +207,7 @@ static  void  AppTaskStart (void *p_arg)
 void Periph_Init()
 {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);				//设置系统中断优先级分组2
-	LED_Init();
+//	LED_Init();
 	KEY_Init();
 	uart_init(115200);
 }
@@ -224,18 +224,19 @@ static void AppTask_Receive(void *p_arg)
 {
 	OS_ERR  err;
 	(void)p_arg;
+	
 	int rev_num = 0;
 	
 	for(;;)
 	{
 		if(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) != RESET)
 		{
-			for(rev_num=0; rev_num<12; rev_num++)
+			for(rev_num=0; rev_num<=2; rev_num++)
 				rev[rev_num] = Read_Bit()-48;
-			targetspeed = rev[0]*100 + rev[1]*10 + rev[2];
-			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
-			leftfront_pid.ki = rev[6] + rev[7]/10.0 + rev[8]/100.0;
-			leftfront_pid.kd = rev[9] + rev[10]/10.0 + rev[11]/100.0;
+			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2];
+//			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
+//			leftfront_pid.ki = rev[6] + rev[7]/10.0 + rev[8]/100.0;
+//			leftfront_pid.kd = rev[9] + rev[10]/10.0 + rev[11]/100.0;
 		}
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
@@ -246,15 +247,14 @@ static void AppTask_USART(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	
-//	uart_init(115200);	// 初始化串口波特率为115200
 	OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	
 	printf("Hello\r\n");
 	
 	for(;;)
 	{
-//		DispTaskInfo();
-		printf("%d	%.2f	%.2f	%.2f	%.2f\r\n",targetspeed, leftrear_pid.kp, leftrear_pid.ki, leftrear_pid.kd, incremental_pid(&leftrear_pid));
+		DispTaskInfo();
+//		printf("%d	%.2f	%.2f	%.2f	%.2f\r\n",targetspeed, leftrear_pid.kp, leftrear_pid.ki, leftrear_pid.kd, incremental_pid(&leftrear_pid));
 		OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -272,54 +272,57 @@ static void AppTask_Mecanum(void *p_arg)
 	Encoder_Init_TIM5();
 	
 	incremental_pid_init(&rightfront_pid, 0.3, 0.5, 0.3);
-	incremental_pid_init(&leftfront_pid, 0.3, 0.5, 0.3);
-	incremental_pid_init(&rightrear_pid, 0.3, 0.5, 0.3);
-	incremental_pid_init(&leftrear_pid, 0.3, 0.5, 0.3);
+	incremental_pid_init(&leftfront_pid,  0.3, 0.5, 0.3);
+	incremental_pid_init(&rightrear_pid,  0.3, 0.5, 0.3);
+	incremental_pid_init(&leftrear_pid,   0.3, 0.5, 0.3);
 	
 	for(;;)
 	{
-		target_mecanum = moto_caculate(pwm_x, pwm_y, pwm_w);
+		targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
 		
 		if(rightfront_pwm < 0)
-			rightfront_pid.error = (targetspeed)-100+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;
+			rightfront_pid.error = (targetMecanum[0])+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;
 		else
-			rightfront_pid.error = (targetspeed)-100-((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;		
-		TIM2->CNT = 0;	
+			rightfront_pid.error = (targetMecanum[0])-((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;		
+		TIM2->CNT = 0;
+		
 		if(leftfront_pwm < 0)
-			leftfront_pid.error = (targetspeed)-100-((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM2->CNT)*1.5;
+			leftfront_pid.error = (targetMecanum[1])+((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM3->CNT)*1.5;
 		else
-			leftfront_pid.error = (targetspeed)-100+((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM2->CNT)*1.5;		
-		TIM3->CNT = 0;	
+			leftfront_pid.error = (targetMecanum[1])-((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM3->CNT)*1.5;		
+		TIM3->CNT = 0;
+		
 		if(leftrear_pwm < 0)
-			leftrear_pid.error = (targetspeed)-100+((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;
+			leftrear_pid.error = (targetMecanum[2])+((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;
 		else
-			leftrear_pid.error = (targetspeed)-100-((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;		
-		TIM4->CNT = 0;	
+			leftrear_pid.error = (targetMecanum[2])-((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;		
+		TIM4->CNT = 0;
+		
 		if(rightrear_pwm < 0)
-			rightrear_pid.error = (targetspeed)-100+((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;
+			rightrear_pid.error = (targetMecanum[3])+((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;
 		else
-			rightrear_pid.error = (targetspeed)-100-((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;		
-		TIM5->CNT = 0;	
+			rightrear_pid.error = (targetMecanum[3])-((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;		
+		TIM5->CNT = 0;
 
 		rightfront_pwm += incremental_pid(&rightfront_pid);
-		leftfront_pwm += incremental_pid(&leftfront_pid);
-		leftrear_pwm += incremental_pid(&leftrear_pid);
-		rightrear_pwm += incremental_pid(&rightrear_pid);
+		leftfront_pwm  += incremental_pid(&leftfront_pid);
+		leftrear_pwm   += incremental_pid(&leftrear_pid);
+		rightrear_pwm  += incremental_pid(&rightrear_pid);
 		
-		if(rightfront_pwm > 80)	rightfront_pwm = 80;
-		else if(rightfront_pwm < -80)	rightfront_pwm = -80;
-		if(leftfront_pwm > 80)	leftfront_pwm = 80;
-		else if(leftfront_pwm < -80)	leftfront_pwm = -80;
-		if(leftrear_pwm > 80)	leftrear_pwm = 80;
-		else if(leftrear_pwm < -80)	leftrear_pwm = -80;
-		if(rightrear_pwm > 80)	rightrear_pwm = 80;
-		else if(rightrear_pwm < -80)		rightrear_pwm = -80;
+//		if(rightfront_pwm > 99)	rightfront_pwm = 99;
+//		else if(rightfront_pwm < -99)	rightfront_pwm = -99;
+//		if(leftfront_pwm > 99)	leftfront_pwm = 99;
+//		else if(leftfront_pwm < -99)	leftfront_pwm = -99;
+//		if(leftrear_pwm > 99)	leftrear_pwm = 99;
+//		else if(leftrear_pwm < -99)	leftrear_pwm = -99;
+//		if(rightrear_pwm > 99)	rightrear_pwm = 99;
+//		else if(rightrear_pwm < -99)		rightrear_pwm = -99;
 
+		Control_Dir(1, LIMIT(-99, rightfront_pwm, 99));
+		Control_Dir(2, LIMIT(-99, leftfront_pwm,  99));
+		Control_Dir(3, LIMIT(-99, leftrear_pwm,   99));
+		Control_Dir(4, LIMIT(-99, rightrear_pwm,  99));
 		
-		Control_Dir(1, rightfront_pwm);
-		Control_Dir(2, leftrear_pwm);
-		Control_Dir(3, leftrear_pwm);
-		Control_Dir(4, leftrear_pwm);
 		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -329,17 +332,22 @@ static void AppTask_CCD(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	
-//	CCD_Init();
+	CCD_Init();
 	
 	for(;;)
 	{
-//		CCD_Collect();
+		CCD_Collect();
 //		ccd_send_data(USART2, ccd1_data);
+		ccd1_center = Find_Line(ccd1_data, ccd1_center, 2700);
+		ccd2_center = Find_Line(ccd2_data, ccd2_center, 2700);
 		
-		push(1,targetspeed);
-		push(2,leftrear_pid.error+100);
-		push(3,leftrear_pwm);
-		sendDataToScope();
+		targetSpeedX =  (ccd2_center - 64) * 1.0;
+		targetSpeedW = -(ccd1_center - 64) * 1.0;
+		
+//		push(1,targetspeed);
+//		push(2,leftrear_pid.error+100);
+//		push(3,leftrear_pwm);
+//		sendDataToScope();
 		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
