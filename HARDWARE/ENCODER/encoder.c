@@ -34,20 +34,26 @@ void Encoder_Init_TIM2(void)
     GPIO_InitTypeDef GPIO_InitStructure;
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);//使能定时器2的时钟
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能PA端口时钟
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能PA端口时钟
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能PA端口时钟
 //GPIO设置为输入
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11;	//端口配置
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;	//端口配置
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF ; //浮空输入
+    GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;	//端口配置
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF ; //浮空输入
     GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
 
-    GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_TIM2); //
-    GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_TIM2); //
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource5, GPIO_AF_TIM2); //
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource3, GPIO_AF_TIM2); //
 
 //定时器设置  （时基）
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);//配置为默认模式
     TIM_TimeBaseStructure.TIM_Prescaler = 0; // 预分频器
-    TIM_TimeBaseStructure.TIM_Period = ENCODER_TIM_PERIOD; //设定计数器自动重装值65535
+    TIM_TimeBaseStructure.TIM_Period = 0xffffffff; //设定计数器自动重装值65535
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;//选择时钟分频：不分频
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;////TIM向上计数
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
@@ -65,22 +71,22 @@ void Encoder_Init_TIM2(void)
     TIM_Cmd(TIM2, ENABLE);
 }
 
-void Encoder_Init_TIM3(void)//PC6,PC7
+void Encoder_Init_TIM3(void)//PB4,PB5
 {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;  //时基设置
     TIM_ICInitTypeDef TIM_ICInitStructure;  //输入捕获
     GPIO_InitTypeDef GPIO_InitStructure;
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);//使能定时器2的时钟
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);//使能PA端口时钟
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能PA端口时钟
 //GPIO设置为输入
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;	//端口配置
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF ; //浮空输入
     GPIO_InitStructure.GPIO_Speed  = GPIO_Speed_100MHz;
-    GPIO_Init(GPIOC, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
+    GPIO_Init(GPIOA, &GPIO_InitStructure);					      //根据设定参数初始化GPIOA
 
-    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_TIM3); //
-    GPIO_PinAFConfig(GPIOC, GPIO_PinSource7, GPIO_AF_TIM3); //
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_TIM3); //
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_TIM3); //
 
 //定时器设置  （时基）
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);//配置为默认模式
@@ -199,7 +205,7 @@ void Encoder_Init_TIM5(void)
 
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_TimeBaseStructure.TIM_Prescaler = 0x0; // 预分频器
-    TIM_TimeBaseStructure.TIM_Period = ENCODER_TIM_PERIOD; //设定计数器自动重装值
+    TIM_TimeBaseStructure.TIM_Period = 0xffffffff; //设定计数器自动重装值
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;//选择时钟分频：不分频
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;////TIM向上计数
     TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);

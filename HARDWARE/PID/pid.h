@@ -2,6 +2,9 @@
 #define _PID_H
 #include "sys.h"
 
+#define MIN(x,y) (x<y)?x:y
+#define LIMIT(min,x,max) (min>x)?min:((max<x)?max:x)
+
 struct PositionPID{
 	float kp, ki, kd;
 	float error, last_error, sum_error;
