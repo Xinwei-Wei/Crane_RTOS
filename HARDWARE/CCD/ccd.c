@@ -133,6 +133,7 @@ int find_line(void)
 int Find_Line(u16 *data, int center, int threshold)
 {
 	int i, emergency_flag = 0, edge_count = 0, edge_left = 0, edge_right = 127;
+	int emergency_count = 0, emergency_max = 0, emergency_right = 0;
 	
 	for(i=center-2; i<=center+2; i++)
 	{
@@ -170,8 +171,22 @@ int Find_Line(u16 *data, int center, int threshold)
 	}
 	else
 	{
-		// TODO 中心偏离时的紧急方案，全局扫描
+		for(i=0; i<=127; i++)
+		{
+			if(data[i] <= threshold)
+				emergency_count++;
+			else
+			{
+				emergency_count = 0;
+				if(emergency_count > emergency_max)
+				{
+					emergency_max = emergency_count;
+					emergency_right = i-1;
+				}
+			}
+		}
+		if(emergency_max >= 5)
+			center = emergency_right - emergency_max/2 - 0.5;
 		return center;
 	}
 }
-		
