@@ -45,8 +45,8 @@
 /// 任务优先级
 #define		AppTask_Receive_PRIO		6u
 #define		AppTask_USART_PRIO			7u
-#define		AppTask_Mecanum_PRIO		4u
-#define		AppTask_CCD_PRIO			5u
+#define		AppTask_Mecanum_PRIO		5u
+#define		AppTask_CCD_PRIO			4u
 
 /*
 *********************************************************************************************************
@@ -253,9 +253,15 @@ static void AppTask_USART(void *p_arg)
 	
 	for(;;)
 	{
-		DispTaskInfo();
+//		DispTaskInfo();
+		
+		push(1,targetMecanum[1]);
+		push(2,leftfront_pid.error+100);
+		push(3,leftfront_pwm);
+		sendDataToScope();
+		
 //		printf("%d	%.2f	%.2f	%.2f	%.2f\r\n",targetspeed, leftrear_pid.kp, leftrear_pid.ki, leftrear_pid.kd, incremental_pid(&leftrear_pid));
-		OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+		OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
 
@@ -272,7 +278,7 @@ static void AppTask_Mecanum(void *p_arg)
 	Encoder_Init_TIM5();
 	
 	incremental_pid_init(&rightfront_pid, 0.3, 0.5, 0.3);
-	incremental_pid_init(&leftfront_pid,  0.3, 0.5, 0.3);
+	incremental_pid_init(&leftfront_pid,  0.6, 1.0, 0.6);
 	incremental_pid_init(&rightrear_pid,  0.3, 0.5, 0.3);
 	incremental_pid_init(&leftrear_pid,   0.3, 0.5, 0.3);
 	
@@ -333,16 +339,19 @@ static void AppTask_CCD(void *p_arg)
 	(void)p_arg;
 	
 	CCD_Init();
+	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	
 	for(;;)
 	{
 		CCD_Collect();
 //		ccd_send_data(USART2, ccd1_data);
-		ccd1_center = Find_Line(ccd1_data, ccd1_center, 2700);
-		ccd2_center = Find_Line(ccd2_data, ccd2_center, 2700);
+		ccd1_center = Find_Line(ccd1_data, ccd1_center, 3200);
+		ccd2_center = Find_Line(ccd2_data, ccd2_center, 3200);
 		
-		targetSpeedX =  (ccd2_center - 64) * 1.0;
-		targetSpeedW = -(ccd1_center - 64) * 1.0;
+		if(ccd2_center > 68 || ccd2_center < 60)
+			targetSpeedX =  (ccd2_center - 64) * 2.0;
+		if(ccd1_center > 68 || ccd1_center < 60)
+			targetSpeedW = -(ccd1_center - 64) * 6.0;
 		
 //		push(1,targetspeed);
 //		push(2,leftrear_pid.error+100);
@@ -415,19 +424,19 @@ static  void  AppTaskCreate (void)
                  (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
                  (OS_ERR      *)&os_err);
 				 
-	OSTaskCreate((OS_TCB      *)&AppTask_CCD_TCB,
-                 (CPU_CHAR    *)"CCD Read",
-                 (OS_TASK_PTR  ) AppTask_CCD,
-                 (void        *) 0,
-                 (OS_PRIO      ) AppTask_CCD_PRIO,
-                 (CPU_STK     *)&AppTask_CCD_Stk[0],
-                 (CPU_STK_SIZE ) AppTask_CCD_Stk[AppTask_Common_STK_SIZE / 10u],
-                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
-                 (OS_MSG_QTY   ) 0u,
-                 (OS_TICK      ) 0u,
-                 (void        *) 0,
-                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
-                 (OS_ERR      *)&os_err);
+//	OSTaskCreate((OS_TCB      *)&AppTask_CCD_TCB,
+//                 (CPU_CHAR    *)"CCD Read",
+//                 (OS_TASK_PTR  ) AppTask_CCD,
+//                 (void        *) 0,
+//                 (OS_PRIO      ) AppTask_CCD_PRIO,
+//                 (CPU_STK     *)&AppTask_CCD_Stk[0],
+//                 (CPU_STK_SIZE ) AppTask_CCD_Stk[AppTask_Common_STK_SIZE / 10u],
+//                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
+//                 (OS_MSG_QTY   ) 0u,
+//                 (OS_TICK      ) 0u,
+//                 (void        *) 0,
+//                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
+//                 (OS_ERR      *)&os_err);
 				 
 }
 

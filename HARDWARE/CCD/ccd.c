@@ -3,6 +3,7 @@
 #include "delay.h"
 #include "usart.h"
 #include "adc.h"
+#include "pid.h"
 
 #define CCD1_CLK  	PAout(11)
 #define CCD1_SI		PAout(12)
@@ -167,10 +168,12 @@ int Find_Line(u16 *data, int center, int threshold)
 		edge_count = 0;
 		
 		center = (edge_left + edge_right) / 2 + 0.5;
+		center = LIMIT(3, center, 124);
 		return center;
 	}
 	else
 	{
+		emergency_flag = 0;
 		for(i=0; i<=127; i++)
 		{
 			if(data[i] <= threshold)
@@ -185,8 +188,9 @@ int Find_Line(u16 *data, int center, int threshold)
 				}
 			}
 		}
-		if(emergency_max >= 5)
+		if(emergency_max >= 3)
 			center = emergency_right - emergency_max/2 - 0.5;
+		center = LIMIT(3, center, 124);
 		return center;
 	}
 }
