@@ -233,7 +233,7 @@ static void AppTask_Receive(void *p_arg)
 		{
 			for(rev_num=0; rev_num<=2; rev_num++)
 				rev[rev_num] = Read_Bit()-48;
-			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2];
+			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2]-50;
 //			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
 //			leftfront_pid.ki = rev[6] + rev[7]/10.0 + rev[8]/100.0;
 //			leftfront_pid.kd = rev[9] + rev[10]/10.0 + rev[11]/100.0;
@@ -278,7 +278,7 @@ static void AppTask_Mecanum(void *p_arg)
 	Encoder_Init_TIM5();
 	
 	incremental_pid_init(&rightfront_pid, 0.3, 0.5, 0.3);
-	incremental_pid_init(&leftfront_pid,  0.6, 1.0, 0.6);
+	incremental_pid_init(&leftfront_pid,  0.06, 0.1, 0.06);
 	incremental_pid_init(&rightrear_pid,  0.3, 0.5, 0.3);
 	incremental_pid_init(&leftrear_pid,   0.3, 0.5, 0.3);
 	
