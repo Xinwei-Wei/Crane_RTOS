@@ -277,10 +277,10 @@ static void AppTask_Mecanum(void *p_arg)
 	Encoder_Init_TIM4();
 	Encoder_Init_TIM5();
 	
-	incremental_pid_init(&rightfront_pid, 0.3, 0.5, 0.3);
+	incremental_pid_init(&rightfront_pid, 0.06, 0.1, 0.06);
 	incremental_pid_init(&leftfront_pid,  0.06, 0.1, 0.06);
-	incremental_pid_init(&rightrear_pid,  0.3, 0.5, 0.3);
-	incremental_pid_init(&leftrear_pid,   0.3, 0.5, 0.3);
+	incremental_pid_init(&rightrear_pid,  0.06, 0.1, 0.06);
+	incremental_pid_init(&leftrear_pid,   0.06, 0.1, 0.06);
 	
 	for(;;)
 	{
