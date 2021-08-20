@@ -253,15 +253,15 @@ static void AppTask_USART(void *p_arg)
 	
 	for(;;)
 	{
-//		DispTaskInfo();
+		DispTaskInfo();
 		
-		push(1,targetMecanum[1]);
-		push(2,leftfront_pid.error+100);
-		push(3,leftfront_pwm);
-		sendDataToScope();
+//		push(1,targetMecanum[1]);
+//		push(2,leftfront_pid.error+100);
+//		push(3,leftfront_pwm);
+//		sendDataToScope();
 		
 //		printf("%d	%.2f	%.2f	%.2f	%.2f\r\n",targetspeed, leftrear_pid.kp, leftrear_pid.ki, leftrear_pid.kd, incremental_pid(&leftrear_pid));
-		OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &err);
+		OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
 
