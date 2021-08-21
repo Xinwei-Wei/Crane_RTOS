@@ -39,7 +39,7 @@ void TIM12_PWM_Init(u16 arr,u16 psc)
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //输出极性:TIM输出比较极性高
 	TIM_OC1Init(TIM12, &TIM_OCInitStructure);  //根据T指定的参数初始化外设TIM12 OC1
 	
-    TIM_OC4PreloadConfig(TIM12, TIM_OCPreload_Enable);  //使能TIM4在CCR1上的预装载寄存器
+    TIM_OC1PreloadConfig(TIM12, TIM_OCPreload_Enable);  //使能TIM4在CCR1上的预装载寄存器
 
     TIM_ARRPreloadConfig(TIM12,ENABLE);//ARPE使能
 	
@@ -82,12 +82,29 @@ void TIM12_IRQHandler(void)
 {
 	if(TIM_GetITStatus(TIM12,TIM_IT_Update) == SET) //溢出中断
 	{
-		stepper_count++;
-		if(stepper_count > 100*ps)
-		{
-			stepper_count = 0;
-			TIM_SetCompare1(TIM12,0);	//修改比较值，修改占空比
-		}
+//		stepper_count++;
+//		if(stepper_count > 100*ps)
+//		{
+//			stepper_count = 0;
+//			TIM_SetCompare1(TIM12,0);	//修改比较值，修改占空比
+//		}
 	}
 	TIM_ClearITPendingBit(TIM12,TIM_IT_Update);  //清除中断标志位
 }
+
+void stepper_start_turn(u16 frequency, u8 dir)
+{
+	PBout(15) = dir;
+	u16 temp_arr = 10000/frequency - 1;
+	TIM_SetAutoreload(TIM12,temp_arr);//设定自动重装值	
+	TIM_SetCompare1(TIM12,temp_arr>>1); //匹配值2等于重装值一半，是以占空比为50%	
+	TIM_SetCounter(TIM12,0);//计数器清零
+	TIM_Cmd(TIM12, ENABLE);  //使能TIM12
+}
+
+void stepper_stop_turn()
+{
+	TIM_SetCompare1(TIM12,0);
+}
+
+
