@@ -118,6 +118,7 @@
 #include "tf-luna.h"
 #include "mecanum_control.h"
 #include "encoder.h"
+#include "stepper_motor.h"
 
 /*
 *********************************************************************************************************

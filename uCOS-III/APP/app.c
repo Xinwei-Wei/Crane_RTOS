@@ -47,6 +47,7 @@
 #define		AppTask_USART_PRIO			7u
 #define		AppTask_Mecanum_PRIO		5u
 #define		AppTask_CCD_PRIO			4u
+#define		AppTask_Stepper_PRIO		8u
 
 /*
 *********************************************************************************************************
@@ -70,6 +71,9 @@ static  CPU_STK		AppTask_Mecanum_Stk[AppTask_Common_STK_SIZE];
 
 static  OS_TCB		AppTask_CCD_TCB;
 static  CPU_STK		AppTask_CCD_Stk[AppTask_Common_STK_SIZE];
+
+static  OS_TCB		AppTask_Stepper_TCB;
+static  CPU_STK		AppTask_Stepper_Stk[AppTask_Common_STK_SIZE];
 
 /// 用户变量声明
 u8 key;
@@ -101,6 +105,7 @@ static  void  	AppObjCreate	(void);
 static	void  	AppTask_Receive			(void *p_arg);
 static	void	AppTask_USART			(void *p_arg);
 static	void	AppTask_Mecanum			(void *p_arg);
+static	void	AppTask_Stepper			(void *p_arg);
 
 /// 用户函数声明
 static	void	DispTaskInfo(void);
@@ -314,15 +319,6 @@ static void AppTask_Mecanum(void *p_arg)
 		leftfront_pwm  += incremental_pid(&leftfront_pid);
 		leftrear_pwm   += incremental_pid(&leftrear_pid);
 		rightrear_pwm  += incremental_pid(&rightrear_pid);
-		
-//		if(rightfront_pwm > 99)	rightfront_pwm = 99;
-//		else if(rightfront_pwm < -99)	rightfront_pwm = -99;
-//		if(leftfront_pwm > 99)	leftfront_pwm = 99;
-//		else if(leftfront_pwm < -99)	leftfront_pwm = -99;
-//		if(leftrear_pwm > 99)	leftrear_pwm = 99;
-//		else if(leftrear_pwm < -99)	leftrear_pwm = -99;
-//		if(rightrear_pwm > 99)	rightrear_pwm = 99;
-//		else if(rightrear_pwm < -99)		rightrear_pwm = -99;
 
 		Control_Dir(1, LIMIT(-99, rightfront_pwm, 99));
 		Control_Dir(2, LIMIT(-99, leftfront_pwm,  99));
@@ -349,9 +345,9 @@ static void AppTask_CCD(void *p_arg)
 		ccd2_center = Find_Line(ccd2_data, ccd2_center, 3200);
 		
 		if(ccd2_center > 68 || ccd2_center < 60)
-			targetSpeedX =  (ccd2_center - 64) * 2.0;
+			targetSpeedX =  (ccd2_center - 64) * 1.0;
 		if(ccd1_center > 68 || ccd1_center < 60)
-			targetSpeedW = -(ccd1_center - 64) * 6.0;
+			targetSpeedW = -(ccd1_center - 64) * 3.0;
 		
 //		push(1,targetspeed);
 //		push(2,leftrear_pid.error+100);
@@ -361,6 +357,21 @@ static void AppTask_CCD(void *p_arg)
 	}
 }
 
+static void AppTask_Stepper(void *p_arg)
+{
+	OS_ERR  err;
+	(void)p_arg;
+	
+	Stepper_Init(5000-1, 8400-1);
+	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+//	stepper_turn(60, 2000);
+	
+	for(;;)
+	{
+//		stepper_turn(60, 2000);
+		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
+	}
+}
 
 /*
 *********************************************************************************************************
@@ -424,19 +435,33 @@ static  void  AppTaskCreate (void)
                  (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
                  (OS_ERR      *)&os_err);
 				 
-//	OSTaskCreate((OS_TCB      *)&AppTask_CCD_TCB,
-//                 (CPU_CHAR    *)"CCD Read",
-//                 (OS_TASK_PTR  ) AppTask_CCD,
-//                 (void        *) 0,
-//                 (OS_PRIO      ) AppTask_CCD_PRIO,
-//                 (CPU_STK     *)&AppTask_CCD_Stk[0],
-//                 (CPU_STK_SIZE ) AppTask_CCD_Stk[AppTask_Common_STK_SIZE / 10u],
-//                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
-//                 (OS_MSG_QTY   ) 0u,
-//                 (OS_TICK      ) 0u,
-//                 (void        *) 0,
-//                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
-//                 (OS_ERR      *)&os_err);
+	OSTaskCreate((OS_TCB      *)&AppTask_CCD_TCB,
+                 (CPU_CHAR    *)"CCD Read",
+                 (OS_TASK_PTR  ) AppTask_CCD,
+                 (void        *) 0,
+                 (OS_PRIO      ) AppTask_CCD_PRIO,
+                 (CPU_STK     *)&AppTask_CCD_Stk[0],
+                 (CPU_STK_SIZE ) AppTask_CCD_Stk[AppTask_Common_STK_SIZE / 10u],
+                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
+                 (OS_MSG_QTY   ) 0u,
+                 (OS_TICK      ) 0u,
+                 (void        *) 0,
+                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
+                 (OS_ERR      *)&os_err);
+				 
+	OSTaskCreate((OS_TCB      *)&AppTask_Stepper_TCB,
+                 (CPU_CHAR    *)"Stepper Control",
+                 (OS_TASK_PTR  ) AppTask_Stepper,
+                 (void        *) 0,
+                 (OS_PRIO      ) AppTask_Stepper_PRIO,
+                 (CPU_STK     *)&AppTask_Stepper_Stk[0],
+                 (CPU_STK_SIZE ) AppTask_Stepper_Stk[AppTask_Common_STK_SIZE / 10u],
+                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
+                 (OS_MSG_QTY   ) 0u,
+                 (OS_TICK      ) 0u,
+                 (void        *) 0,
+                 (OS_OPT       )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
+                 (OS_ERR      *)&os_err);
 				 
 }
 

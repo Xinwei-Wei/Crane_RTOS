@@ -1,5 +1,6 @@
 #include "stepper_motor.h"
 #include "stm32f4xx.h"
+#include "includes.h"
 u8 ps=1, bia;
 double Target_angle = 0;
 double Curruent_angle = 0;
@@ -52,7 +53,7 @@ void TIM9_PWM_Init(u16 arr,u16 psc)
 	TIM_Cmd(TIM9, DISABLE);  //使能TIM4
 	TIM_ITConfig(TIM9,TIM_IT_Update,ENABLE); //允许定时器4更新中断
 	
-	NVIC_InitStructure.NVIC_IRQChannel=TIM1_BRK_TIM9_IRQn; //定时器3中断
+//	NVIC_InitStructure.NVIC_IRQChannel=TIM1_BRK_TIM9_IRQn; //定时器3中断
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0x02; //抢占优先级1
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0x02; //子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
@@ -97,6 +98,7 @@ void TIM9_start(u16 frequency)
 
 void stepper_turn(double angle, u16 frequency)
 {
+	angle *= 20;
 	stepper_frequency = frequency;
 	if(frequency>10000 || frequency<10)return;
 	Target_angle += angle;
@@ -122,22 +124,22 @@ void stepper_turn(double angle, u16 frequency)
 //定时器9中断服务函数
 void TIM1_BRK_TIM9_IRQHandler(void)
 {
-	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
-	{
-		stepper_count+=bu_to_angle;
-		if(stepper_count > angle_count)
-		{
-			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
-			if(dir == 0)
-				Curruent_angle+=stepper_count;
-			else
-				Curruent_angle-=stepper_count;
-			TIM_Cmd(TIM9, DISABLE);
-			stepper_count = 0;
-			stepper_flat = 0;
-			stepper_turn(0, stepper_frequency);			
-		}
-	}
+//	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
+//	{
+//		stepper_count+=bu_to_angle;
+//		if(stepper_count > angle_count)
+//		{
+//			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
+//			if(dir == 0)
+//				Curruent_angle+=stepper_count;
+//			else
+//				Curruent_angle-=stepper_count;
+//			TIM_Cmd(TIM9, DISABLE);
+//			stepper_count = 0;
+//			stepper_flat = 0;
+//			stepper_turn(0, stepper_frequency);			
+//		}
+//	}
 	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
 }
 

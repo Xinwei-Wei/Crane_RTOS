@@ -33,41 +33,41 @@ void Control_Dir(u8 number,float pwm)
 	{
 		case 1:
 			if(pwm>0)
-				Mecanum1_Dir_Pin = 1;
+				Mecanum1_Dir_Pin = 0;
 			else
 			{
 				pwm *= -1;
-				Mecanum1_Dir_Pin = 0;
+				Mecanum1_Dir_Pin = 1;
 			}
 			Mecanum_PWM_SetDuty(1, pwm);
 			break ;
 		case 2:
 			if(pwm>0)
-				Mecanum2_Dir_Pin = 1;
+				Mecanum2_Dir_Pin = 0;
 			else
 			{
 				pwm *= -1;
-				Mecanum2_Dir_Pin = 0;
+				Mecanum2_Dir_Pin = 1;
 			}
 			Mecanum_PWM_SetDuty(2, pwm);
 			break ;
 		case 3:
 			if(pwm>0)
-				Mecanum3_Dir_Pin = 1;
+				Mecanum3_Dir_Pin = 0;
 			else
 			{
 				pwm *= -1;
-				Mecanum3_Dir_Pin = 0;
+				Mecanum3_Dir_Pin = 1;
 			}
 			Mecanum_PWM_SetDuty(3, pwm);
 			break ;
 		case 4:
 			if(pwm>0)
-				Mecanum4_Dir_Pin = 1;
+				Mecanum4_Dir_Pin = 0;
 			else
 			{
 				pwm *= -1;
-				Mecanum4_Dir_Pin = 0;
+				Mecanum4_Dir_Pin = 1;
 			}
 			Mecanum_PWM_SetDuty(4, pwm);
 			break ;
