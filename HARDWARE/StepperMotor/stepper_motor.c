@@ -9,7 +9,7 @@ double stepper_count = 0;
 double bu_to_angle = 1.8/16;
 int stepper_flat = 1;
 u16 stepper_frequency=100;
-int dir;
+int dir, stepperstop;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 
@@ -51,6 +51,7 @@ void TIM9_PWM_Init(u16 arr,u16 psc)
     TIM_ARRPreloadConfig(TIM9,ENABLE);//ARPE使能
 	
 	TIM_Cmd(TIM9, DISABLE);  //使能TIM4
+	TIM_ClearITPendingBit(TIM9, TIM_IT_Update);
 	TIM_ITConfig(TIM9,TIM_IT_Update,ENABLE); //允许定时器4更新中断
 	
 //	NVIC_InitStructure.NVIC_IRQChannel=TIM1_BRK_TIM9_IRQn; //定时器3中断
@@ -124,23 +125,27 @@ void stepper_turn(double angle, u16 frequency)
 //定时器9中断服务函数
 void TIM1_BRK_TIM9_IRQHandler(void)
 {
-//	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
-//	{
-//		stepper_count+=bu_to_angle;
-//		if(stepper_count > angle_count)
-//		{
-//			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
-//			if(dir == 0)
-//				Curruent_angle+=stepper_count;
-//			else
-//				Curruent_angle-=stepper_count;
-//			TIM_Cmd(TIM9, DISABLE);
-//			stepper_count = 0;
-//			stepper_flat = 0;
-//			stepper_turn(0, stepper_frequency);			
-//		}
-//	}
+	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
+	{
+		stepper_count+=bu_to_angle;
+		if(stepper_count > angle_count || stepperstop==1)
+		{
+			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
+			if(dir == 0)
+				Curruent_angle+=stepper_count;
+			else
+				Curruent_angle-=stepper_count;
+			TIM_Cmd(TIM9, DISABLE);
+			stepper_count = 0;
+			stepper_flat = 0;
+			stepper_turn(0, stepper_frequency);
+			stepperstop = 0;
+		}
+	}
 	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
 }
 
-
+void stepper_stop()
+{
+	stepperstop=1;
+}
