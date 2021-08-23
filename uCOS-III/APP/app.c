@@ -88,6 +88,7 @@ extern u16 ccd2_data[128];
 float *targetMecanum;
 float targetSpeedX = 0, targetSpeedY = 0, targetSpeedW = 0;
 int ccd1_center = 64, ccd2_center = 64;
+unsigned int set_time = 0, reset_time = 100;
 
 
 /*
@@ -362,14 +363,16 @@ static void AppTask_Stepper(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	
-	Stepper_Init(5000-1, 8400-1);
+	Stepper_Init();
 	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-	stepper_turn(60, 20);
 	
 	for(;;)
 	{
-//		stepper_turn(60, 200);
-		OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+		PEout(5)=1;
+		OSTimeDlyHMSM(0u, 0u, 0u, set_time, OS_OPT_TIME_HMSM_STRICT, &err);
+		PEout(5)=0;
+		OSTimeDlyHMSM(0u, 0u, 0u, reset_time, OS_OPT_TIME_HMSM_STRICT, &err);
+		soft_IRQ();
 	}
 }
 

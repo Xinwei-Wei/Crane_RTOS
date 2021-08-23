@@ -10,6 +10,8 @@ double bu_to_angle = 1.8/16;
 int stepper_flat = 0;
 u16 stepper_frequency=100;
 int dir, stepperstop=0;
+extern unsigned int set_time;
+extern unsigned int reset_time;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 
@@ -69,31 +71,30 @@ void Stepper_Dir_Init(void)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);//使能GPIOE时钟
 
     //GPIOD13初始化设置
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;			//LED0和LED1对应IO口
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4,GPIO_Pin_5;			//LED0和LED1对应IO口
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;		//普通输出模式
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;		//推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//100MHz
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;		//上拉
     GPIO_Init(GPIOE, &GPIO_InitStructure);				//初始化GPIOB
 
-    GPIO_ResetBits(GPIOE, GPIO_Pin_4);					//GPIOA15设置高，灯灭
+    GPIO_ResetBits(GPIOE, GPIO_Pin_4 | GPIO_Pin_5);					//GPIOA15设置高，灯灭
 }
 
-void Stepper_Init(u16 arr, u16 psc)
+void Stepper_Init(void)
 {
-	TIM9_PWM_Init(arr, psc);
+	//TIM9_PWM_Init(arr, psc);
 	Stepper_Dir_Init();
 }
 
 
 
-void TIM9_start(u16 frequency)
+void soft_TIM_start(u16 frequency)
 {
 	u16 temp_arr=10000/frequency-1; 
-	TIM_SetAutoreload(TIM9,temp_arr);//设定自动重装值	
-	TIM_SetCompare1(TIM9,temp_arr>>1); //匹配值2等于重装值一半，是以占空比为50%	
-	TIM_SetCounter(TIM9,0);//计数器清零
-	TIM_Cmd(TIM9, ENABLE);  //使能TIM12
+	set_time = temp_arr/2;
+	reset_time = set_time;
+	//开启线程
 }
 
 
@@ -102,7 +103,7 @@ void stepper_turn(double angle, u16 frequency)
 	printf("turn ok1\r\n");
 	angle *= 20;
 	stepper_frequency = frequency;
-	if(frequency>10000 || frequency<10)return;
+	if(frequency>500 || frequency<10)return;
 	Target_angle += angle;
 	if(stepper_flat == 0)
 	{
@@ -118,7 +119,7 @@ void stepper_turn(double angle, u16 frequency)
 			PEout(4) = dir;
 			stepper_count = 0;
 			printf("turn ok2\r\n");
-			TIM9_start(frequency);
+			soft_TIM_start(frequency);
 			stepper_flat = 1;
 		}
 	}
@@ -153,7 +154,40 @@ void TIM1_BRK_TIM9_IRQHandler(void)
 	TIM_Cmd(TIM9, DISABLE);
 }
 
-void stepper_stop()
+void stepper_stop(void)
 {
 	stepperstop=1;
+}
+
+void soft_IRQ(void)
+{
+	stepper_count+=bu_to_angle;
+	if(stepper_count > angle_count)
+	{
+		set_time = 0;
+		reset_time *= 2;
+		if(dir == 0)
+			Curruent_angle+=stepper_count;
+		else
+			Curruent_angle-=stepper_count;
+		//关闭线程
+		stepper_count = 0;
+		stepper_flat = 0;
+		stepper_turn(0, stepper_frequency);
+	}
+	if(stepperstop==1)
+	{
+		set_time = 0;
+		reset_time *= 2;
+		//关闭线程
+		if(dir == 0)
+			Curruent_angle+=stepper_count;
+		else
+			Curruent_angle-=stepper_count;
+		Target_angle = Curruent_angle;
+		stepper_count = 0;
+		stepper_flat = 0;
+		stepper_turn(0, stepper_frequency);
+		stepperstop = 0;
+	}
 }
