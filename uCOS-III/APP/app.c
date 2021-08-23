@@ -69,7 +69,7 @@ static  CPU_STK		AppTask_USART_Stk[AppTask_Common_STK_SIZE];
 static  OS_TCB		AppTask_Mecanum_TCB;
 static  CPU_STK		AppTask_Mecanum_Stk[AppTask_Common_STK_SIZE];
 
-static  OS_TCB		AppTask_CCD_TCB;
+//static  OS_TCB		AppTask_CCD_TCB;
 static  CPU_STK		AppTask_CCD_Stk[AppTask_Common_STK_SIZE];
 
 static  OS_TCB		AppTask_Stepper_TCB;
@@ -239,7 +239,10 @@ static void AppTask_Receive(void *p_arg)
 		{
 			for(rev_num=0; rev_num<=2; rev_num++)
 				rev[rev_num] = Read_Bit()-48;
-			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2]-50;
+			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2];
+			if(stepper_turn(targetSpeedY, 500))
+				OSTaskResume(&AppTask_Stepper_TCB, &err);
+			
 //			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
 //			leftfront_pid.ki = rev[6] + rev[7]/10.0 + rev[8]/100.0;
 //			leftfront_pid.kd = rev[9] + rev[10]/10.0 + rev[11]/100.0;
@@ -364,7 +367,6 @@ static void AppTask_Stepper(void *p_arg)
 	(void)p_arg;
 	
 	Stepper_Init();
-	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	
 	for(;;)
 	{
@@ -372,7 +374,8 @@ static void AppTask_Stepper(void *p_arg)
 		OSTimeDlyHMSM(0u, 0u, 0u, set_time, OS_OPT_TIME_HMSM_STRICT, &err);
 		PEout(5)=0;
 		OSTimeDlyHMSM(0u, 0u, 0u, reset_time, OS_OPT_TIME_HMSM_STRICT, &err);
-		soft_IRQ();
+		if(!soft_IRQ())
+			OSTaskSuspend(&AppTask_Stepper_TCB, &err);
 	}
 }
 
@@ -458,8 +461,8 @@ static  void  AppTaskCreate (void)
                  (void        *) 0,
                  (OS_PRIO      ) AppTask_Stepper_PRIO,
                  (CPU_STK     *)&AppTask_Stepper_Stk[0],
-                 (CPU_STK_SIZE ) AppTask_Stepper_Stk[4096u / 10u],
-                 (CPU_STK_SIZE ) 4096u,
+                 (CPU_STK_SIZE ) AppTask_Stepper_Stk[AppTask_Common_STK_SIZE / 10u],
+                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
                  (OS_MSG_QTY   ) 0u,
                  (OS_TICK      ) 0u,
                  (void        *) 0,

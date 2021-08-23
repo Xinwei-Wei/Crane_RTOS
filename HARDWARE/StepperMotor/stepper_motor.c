@@ -1,6 +1,6 @@
 #include "stepper_motor.h"
 #include "stm32f4xx.h"
-#include "includes.h"
+
 u8 ps=1, bia;
 double Target_angle = 0;
 double Curruent_angle = 0;
@@ -12,6 +12,8 @@ u16 stepper_frequency=100;
 int dir, stepperstop=0;
 extern unsigned int set_time;
 extern unsigned int reset_time;
+
+OS_ERR  err;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 
@@ -71,7 +73,7 @@ void Stepper_Dir_Init(void)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);//使能GPIOE时钟
 
     //GPIOD13初始化设置
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4,GPIO_Pin_5;			//LED0和LED1对应IO口
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5;			//LED0和LED1对应IO口
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;		//普通输出模式
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;		//推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//100MHz
@@ -94,20 +96,21 @@ void soft_TIM_start(u16 frequency)
 	u16 temp_arr=10000/frequency-1; 
 	set_time = temp_arr/2;
 	reset_time = set_time;
-	//开启线程
 }
 
 
-void stepper_turn(double angle, u16 frequency)
+int stepper_turn(double angle, u16 frequency)
 {
 	printf("turn ok1\r\n");
 	angle *= 20;
 	stepper_frequency = frequency;
-	if(frequency>500 || frequency<10)return;
+	if(frequency>500 || frequency<10)
+		return 0;
 	Target_angle += angle;
 	if(stepper_flat == 0)
 	{
 		angle_count = Target_angle-Curruent_angle;
+		printf("nmsl");
 		if(angle_count>bu_to_angle || angle_count<-bu_to_angle)
 		{
 			if(angle_count<0)
@@ -115,43 +118,46 @@ void stepper_turn(double angle, u16 frequency)
 				dir = 1;
 				angle_count=-angle_count;
 			}
-			else dir = 0;
+			else 
+				dir = 0;
 			PEout(4) = dir;
 			stepper_count = 0;
 			printf("turn ok2\r\n");
 			soft_TIM_start(frequency);
 			stepper_flat = 1;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 //定时器9中断服务函数
 void TIM1_BRK_TIM9_IRQHandler(void)
 {
-	CPU_SR_ALLOC();
-	CPU_CRITICAL_ENTER();
-	OSIntEnter();
-	CPU_CRITICAL_EXIT(); 
-	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
-	{
-		stepper_count+=bu_to_angle;
-		if(stepper_count > angle_count || stepperstop==1)
-		{
-			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
-			if(dir == 0)
-				Curruent_angle+=stepper_count;
-			else
-				Curruent_angle-=stepper_count;
-			TIM_Cmd(TIM9, DISABLE);
-			stepper_count = 0;
-			stepper_flat = 0;
-			stepper_turn(0, stepper_frequency);
-			stepperstop = 0;
-		}
-	}
-	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
-	OSIntExit();
-	TIM_Cmd(TIM9, DISABLE);
+//	CPU_SR_ALLOC();
+//	CPU_CRITICAL_ENTER();
+//	OSIntEnter();
+//	CPU_CRITICAL_EXIT(); 
+//	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
+//	{
+//		stepper_count+=bu_to_angle;
+//		if(stepper_count > angle_count || stepperstop==1)
+//		{
+//			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
+//			if(dir == 0)
+//				Curruent_angle+=stepper_count;
+//			else
+//				Curruent_angle-=stepper_count;
+//			TIM_Cmd(TIM9, DISABLE);
+//			stepper_count = 0;
+//			stepper_flat = 0;
+//			stepper_turn(0, stepper_frequency, tcb);
+//			stepperstop = 0;
+//		}
+//	}
+//	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
+//	OSIntExit();
+//	TIM_Cmd(TIM9, DISABLE);
 }
 
 void stepper_stop(void)
@@ -159,8 +165,9 @@ void stepper_stop(void)
 	stepperstop=1;
 }
 
-void soft_IRQ(void)
+int soft_IRQ(void)
 {
+	int res = 1;
 	stepper_count+=bu_to_angle;
 	if(stepper_count > angle_count)
 	{
@@ -171,6 +178,7 @@ void soft_IRQ(void)
 		else
 			Curruent_angle-=stepper_count;
 		//关闭线程
+		res = 0;
 		stepper_count = 0;
 		stepper_flat = 0;
 		stepper_turn(0, stepper_frequency);
@@ -180,6 +188,7 @@ void soft_IRQ(void)
 		set_time = 0;
 		reset_time *= 2;
 		//关闭线程
+		res = 0;
 		if(dir == 0)
 			Curruent_angle+=stepper_count;
 		else
@@ -190,4 +199,5 @@ void soft_IRQ(void)
 		stepper_turn(0, stepper_frequency);
 		stepperstop = 0;
 	}
+	return res;
 }
