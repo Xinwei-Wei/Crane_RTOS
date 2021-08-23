@@ -364,12 +364,12 @@ static void AppTask_Stepper(void *p_arg)
 	
 	Stepper_Init(5000-1, 8400-1);
 	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-//	stepper_turn(60, 2000);
+	stepper_turn(60, 20);
 	
 	for(;;)
 	{
-//		stepper_turn(60, 2000);
-		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
+//		stepper_turn(60, 200);
+		OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
 
@@ -455,8 +455,8 @@ static  void  AppTaskCreate (void)
                  (void        *) 0,
                  (OS_PRIO      ) AppTask_Stepper_PRIO,
                  (CPU_STK     *)&AppTask_Stepper_Stk[0],
-                 (CPU_STK_SIZE ) AppTask_Stepper_Stk[AppTask_Common_STK_SIZE / 10u],
-                 (CPU_STK_SIZE ) AppTask_Common_STK_SIZE,
+                 (CPU_STK_SIZE ) AppTask_Stepper_Stk[4096u / 10u],
+                 (CPU_STK_SIZE ) 4096u,
                  (OS_MSG_QTY   ) 0u,
                  (OS_TICK      ) 0u,
                  (void        *) 0,

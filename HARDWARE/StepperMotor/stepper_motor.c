@@ -7,9 +7,9 @@ double Curruent_angle = 0;
 double angle_count = 0;
 double stepper_count = 0;
 double bu_to_angle = 1.8/16;
-int stepper_flat = 1;
+int stepper_flat = 0;
 u16 stepper_frequency=100;
-int dir, stepperstop;
+int dir, stepperstop=0;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 
@@ -54,7 +54,7 @@ void TIM9_PWM_Init(u16 arr,u16 psc)
 	TIM_ClearITPendingBit(TIM9, TIM_IT_Update);
 	TIM_ITConfig(TIM9,TIM_IT_Update,ENABLE); //允许定时器4更新中断
 	
-//	NVIC_InitStructure.NVIC_IRQChannel=TIM1_BRK_TIM9_IRQn; //定时器3中断
+	NVIC_InitStructure.NVIC_IRQChannel=TIM1_BRK_TIM9_IRQn; //定时器3中断
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0x02; //抢占优先级1
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0x02; //子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
@@ -99,6 +99,7 @@ void TIM9_start(u16 frequency)
 
 void stepper_turn(double angle, u16 frequency)
 {
+	printf("turn ok1\r\n");
 	angle *= 20;
 	stepper_frequency = frequency;
 	if(frequency>10000 || frequency<10)return;
@@ -116,6 +117,7 @@ void stepper_turn(double angle, u16 frequency)
 			else dir = 0;
 			PEout(4) = dir;
 			stepper_count = 0;
+			printf("turn ok2\r\n");
 			TIM9_start(frequency);
 			stepper_flat = 1;
 		}
@@ -125,6 +127,10 @@ void stepper_turn(double angle, u16 frequency)
 //定时器9中断服务函数
 void TIM1_BRK_TIM9_IRQHandler(void)
 {
+	CPU_SR_ALLOC();
+	CPU_CRITICAL_ENTER();
+	OSIntEnter();
+	CPU_CRITICAL_EXIT(); 
 	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
 	{
 		stepper_count+=bu_to_angle;
@@ -143,6 +149,8 @@ void TIM1_BRK_TIM9_IRQHandler(void)
 		}
 	}
 	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
+	OSIntExit();
+	TIM_Cmd(TIM9, DISABLE);
 }
 
 void stepper_stop()
