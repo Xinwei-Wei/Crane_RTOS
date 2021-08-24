@@ -366,6 +366,8 @@ static void AppTask_Stepper(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	
+	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+	Stepper_EN_Init();
 	Stepper_Init();
 	OSTaskSuspend(&AppTask_Stepper_TCB, &err);
 	
@@ -379,6 +381,11 @@ static void AppTask_Stepper(void *p_arg)
 			OSTaskSuspend(&AppTask_Stepper_TCB, &err);
 	}
 }
+
+//static void AppTask_Stepper(void *p_arg)
+//{
+//	
+//}
 
 /*
 *********************************************************************************************************

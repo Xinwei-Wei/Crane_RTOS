@@ -9,5 +9,6 @@
 #define LED1 PAout(7)	// DS1	 
 
 void LED_Init(void);//≥ı ºªØ
+void Stepper_EN_Init(void);
 #endif
 

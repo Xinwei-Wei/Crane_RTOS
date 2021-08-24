@@ -176,7 +176,6 @@ int soft_IRQ(void)
 			Curruent_angle+=stepper_count;
 		else
 			Curruent_angle-=stepper_count;
-		//关闭线程
 		res = 0;
 		stepper_count = 0;
 		stepper_flat = 0;
@@ -186,12 +185,8 @@ int soft_IRQ(void)
 	{
 		set_time = 0;
 		reset_time *= 2;
-		//关闭线程
 		res = 0;
-		if(dir == 0)
-			Curruent_angle+=stepper_count;
-		else
-			Curruent_angle-=stepper_count;
+		Curruent_angle = 0;
 		Target_angle = Curruent_angle;
 		stepper_count = 0;
 		stepper_flat = 0;
