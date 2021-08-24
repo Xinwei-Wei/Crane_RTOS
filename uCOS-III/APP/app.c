@@ -367,6 +367,7 @@ static void AppTask_Stepper(void *p_arg)
 	(void)p_arg;
 	
 	Stepper_Init();
+	OSTaskSuspend(&AppTask_Stepper_TCB, &err);
 	
 	for(;;)
 	{

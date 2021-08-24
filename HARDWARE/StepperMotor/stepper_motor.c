@@ -1,12 +1,11 @@
 #include "stepper_motor.h"
 #include "stm32f4xx.h"
 
-u8 ps=1, bia;
 double Target_angle = 0;
 double Curruent_angle = 0;
 double angle_count = 0;
 double stepper_count = 0;
-double bu_to_angle = 1.8/16;
+double bu_to_angle = 1.8/2;
 int stepper_flat = 0;
 u16 stepper_frequency=100;
 int dir, stepperstop=0;
@@ -93,7 +92,7 @@ void Stepper_Init(void)
 
 void soft_TIM_start(u16 frequency)
 {
-	u16 temp_arr=10000/frequency-1; 
+	u16 temp_arr=1000/frequency; 
 	set_time = temp_arr/2;
 	reset_time = set_time;
 }
@@ -102,7 +101,7 @@ void soft_TIM_start(u16 frequency)
 int stepper_turn(double angle, u16 frequency)
 {
 	printf("turn ok1\r\n");
-	angle *= 20;
+	angle *= 10;
 	stepper_frequency = frequency;
 	if(frequency>500 || frequency<10)
 		return 0;
