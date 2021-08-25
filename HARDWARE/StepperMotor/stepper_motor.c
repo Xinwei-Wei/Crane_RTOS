@@ -11,7 +11,7 @@ u16 stepper_frequency=100;
 int bottom_dir, RL_dir, UD_dir, stepperstop=0;
 extern unsigned int set_time;
 extern unsigned int reset_time;
-double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/32, UD_bu_to_angle = 1.8/32;
+double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/32, UD_bu_to_angle = 1.8/1;
 extern int bottom_stepper_judge, RL_stepper_judge, UD_stepper_judge, stepper_judge;
 int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
 
@@ -86,7 +86,7 @@ void Stepper_Dir_Init(void)
 	GPIO_Init(GPIOD, &GPIO_InitStructure);				//初始化GPIOB
 
     GPIO_ResetBits(GPIOE, GPIO_Pin_4 | GPIO_Pin_5);					//GPIOA15设置高，灯灭
-	GPIO_ResetBits(GPIOE, GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7);
+	GPIO_ResetBits(GPIOD, GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7);
 }
 
 void Stepper_Init(void)
@@ -165,9 +165,11 @@ int UD_stepper_turn(double angle)
 	UD_target_angle += angle;
 	if(UD_stepper_judge == 0)
 	{
+		printf("ok1");
 		UD_angle_count = UD_target_angle - UD_curruent_angle;
 		if(UD_angle_count>UD_bu_to_angle || UD_angle_count<-UD_bu_to_angle)
 		{
+			printf("ok2");
 			if(UD_angle_count<0)
 			{
 				UD_dir = 1;
@@ -255,6 +257,7 @@ void soft_IRQ(void)
 	}
 	if(UD_stepper_judge)
 	{
+		printf("ok?");
 		UD_stepper_count += UD_bu_to_angle;
 		if(UD_stepper_count > UD_angle_count || UD_target_change)
 		{

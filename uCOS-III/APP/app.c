@@ -240,8 +240,8 @@ static void AppTask_Receive(void *p_arg)
 		{
 			for(rev_num=0; rev_num<=2; rev_num++)
 				rev[rev_num] = Read_Bit()-48;
-			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2];
-			if(bottom_stepper_turn(targetSpeedY))
+			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2]-500;
+			if(UD_stepper_turn(targetSpeedY))
 				OSTaskResume(&AppTask_Stepper_TCB, &err);
 			
 //			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
@@ -263,7 +263,7 @@ static void AppTask_USART(void *p_arg)
 	
 	for(;;)
 	{
-		DispTaskInfo();
+		//DispTaskInfo();
 		
 //		push(1,targetMecanum[1]);
 //		push(2,leftfront_pid.error+100);
@@ -366,9 +366,10 @@ static void AppTask_Stepper(void *p_arg)
 {
 	OS_ERR  err;
 	(void)p_arg;
-	
-	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	Stepper_EN_Init();
+	OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+	GPIO_SetBits(GPIOB, GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12);
+	
 	Stepper_Init();
 	OSTaskSuspend(&AppTask_Stepper_TCB, &err);
 	
@@ -380,11 +381,12 @@ static void AppTask_Stepper(void *p_arg)
 			PDout(5)=1;
 		if(UD_stepper_judge)
 			PDout(7)=1;
-		OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+		OSTimeDlyHMSM(0u, 0u, 0u, 1u, OS_OPT_TIME_HMSM_STRICT, &err);
 		PEout(5)=0;
 		PDout(5)=0;
 		PDout(7)=0;
-		OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+		OSTimeDlyHMSM(0u, 0u, 0u, 1u, OS_OPT_TIME_HMSM_STRICT, &err);
+		soft_IRQ();
 		if(!(bottom_stepper_judge||RL_stepper_judge||UD_stepper_judge))
 		{
 			OSTaskSuspend(&AppTask_Stepper_TCB, &err);
