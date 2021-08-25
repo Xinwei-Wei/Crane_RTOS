@@ -89,6 +89,7 @@ float *targetMecanum;
 float targetSpeedX = 0, targetSpeedY = 0, targetSpeedW = 0;
 int ccd1_center = 64, ccd2_center = 64;
 unsigned int set_time = 0, reset_time = 100;
+int bottom_stepper_judge = 0, RL_stepper_judge = 0, UD_stepper_judge = 0, stepper_judge = 0;
 
 
 /*
@@ -240,7 +241,7 @@ static void AppTask_Receive(void *p_arg)
 			for(rev_num=0; rev_num<=2; rev_num++)
 				rev[rev_num] = Read_Bit()-48;
 			targetSpeedY = rev[0]*100 + rev[1]*10 + rev[2];
-			if(stepper_turn(targetSpeedY, 500))
+			if(bottom_stepper_turn(targetSpeedY))
 				OSTaskResume(&AppTask_Stepper_TCB, &err);
 			
 //			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
@@ -373,12 +374,21 @@ static void AppTask_Stepper(void *p_arg)
 	
 	for(;;)
 	{
-		PEout(5)=1;
-		OSTimeDlyHMSM(0u, 0u, 0u, set_time, OS_OPT_TIME_HMSM_STRICT, &err);
+		if(bottom_stepper_judge)
+			PEout(5)=1;
+		if(RL_stepper_judge)
+			PDout(5)=1;
+		if(UD_stepper_judge)
+			PDout(7)=1;
+		OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
 		PEout(5)=0;
-		OSTimeDlyHMSM(0u, 0u, 0u, reset_time, OS_OPT_TIME_HMSM_STRICT, &err);
-		if(!soft_IRQ())
+		PDout(5)=0;
+		PDout(7)=0;
+		OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+		if(!(bottom_stepper_judge||RL_stepper_judge||UD_stepper_judge))
+		{
 			OSTaskSuspend(&AppTask_Stepper_TCB, &err);
+		}
 	}
 }
 

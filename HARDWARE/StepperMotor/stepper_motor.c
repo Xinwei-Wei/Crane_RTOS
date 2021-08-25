@@ -1,16 +1,19 @@
 #include "stepper_motor.h"
 #include "stm32f4xx.h"
 
-double Target_angle = 0;
-double Curruent_angle = 0;
-double angle_count = 0;
-double stepper_count = 0;
 double bu_to_angle = 1.8/2;
+double bottom_target_angle = 0, RL_target_angle = 0, UD_target_angle = 0;
+double bottom_curruent_angle = 0, RL_curruent_angle = 0, UD_curruent_angle = 0;
+double bottom_angle_count = 0, RL_angle_count = 0, UD_angle_count = 0;
+double bottom_stepper_count = 0, RL_stepper_count = 0, UD_stepper_count = 0;
 int stepper_flat = 0;
 u16 stepper_frequency=100;
-int dir, stepperstop=0;
+int bottom_dir, RL_dir, UD_dir, stepperstop=0;
 extern unsigned int set_time;
 extern unsigned int reset_time;
+double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/32, UD_bu_to_angle = 1.8/32;
+extern int bottom_stepper_judge, RL_stepper_judge, UD_stepper_judge, stepper_judge;
+int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
 
 OS_ERR  err;
 
@@ -70,6 +73,7 @@ void Stepper_Dir_Init(void)
     GPIO_InitTypeDef  GPIO_InitStructure;
 
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);//使能GPIOE时钟
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);//使能GPIOD时钟
 
     //GPIOD13初始化设置
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5;			//LED0和LED1对应IO口
@@ -78,8 +82,11 @@ void Stepper_Dir_Init(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//100MHz
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;		//上拉
     GPIO_Init(GPIOE, &GPIO_InitStructure);				//初始化GPIOB
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);				//初始化GPIOB
 
     GPIO_ResetBits(GPIOE, GPIO_Pin_4 | GPIO_Pin_5);					//GPIOA15设置高，灯灭
+	GPIO_ResetBits(GPIOE, GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7);
 }
 
 void Stepper_Init(void)
@@ -98,35 +105,83 @@ void soft_TIM_start(u16 frequency)
 }
 
 
-int stepper_turn(double angle, u16 frequency)
+int bottom_stepper_turn(double angle)//, u16 frequency)
 {
-	printf("turn ok1\r\n");
 	angle *= 10;
-	stepper_frequency = frequency;
-	if(frequency>500 || frequency<10)
-		return 0;
-	Target_angle += angle;
-	if(stepper_flat == 0)
+	//stepper_frequency = frequency;
+	//if(frequency>500 || frequency<10)
+	//	return 0;
+	bottom_target_angle += angle;
+	if(bottom_stepper_judge == 0)
 	{
-		angle_count = Target_angle-Curruent_angle;
-		printf("nmsl");
-		if(angle_count>bu_to_angle || angle_count<-bu_to_angle)
+		bottom_angle_count = bottom_target_angle-bottom_curruent_angle;
+		if(bottom_angle_count>bottom_bu_to_angle || bottom_angle_count<-bottom_bu_to_angle)
 		{
-			if(angle_count<0)
+			if(bottom_angle_count<0)
 			{
-				dir = 1;
-				angle_count=-angle_count;
+				bottom_dir = 1;
+				bottom_angle_count = -bottom_angle_count;
 			}
 			else 
-				dir = 0;
-			PEout(4) = dir;
-			stepper_count = 0;
-			printf("turn ok2\r\n");
-			soft_TIM_start(frequency);
-			stepper_flat = 1;
+				bottom_dir = 0;
+			PEout(4) = bottom_dir;
+			bottom_stepper_count = 0;
+			//soft_TIM_start(frequency);
+			bottom_stepper_judge = 1;
 			return 1;
 		}
 	}
+	bottom_target_change = 1;
+	return 0;
+}
+
+int RL_stepper_turn(double angle)
+{
+	RL_target_angle += angle;
+	if(RL_stepper_judge == 0)
+	{
+		RL_angle_count = RL_target_angle - RL_curruent_angle;
+		if(RL_angle_count>RL_bu_to_angle || RL_angle_count<-RL_bu_to_angle)
+		{
+			if(RL_angle_count<0)
+			{
+				RL_dir = 1;
+				RL_angle_count = -RL_angle_count;
+			}
+			else 
+				RL_dir = 0;
+			PDout(4) = RL_dir;
+			RL_stepper_count = 0;
+			RL_stepper_judge = 1;
+			return 1;
+		}
+	}
+	RL_target_change = 1;
+	return 0;
+}
+
+int UD_stepper_turn(double angle)
+{
+	UD_target_angle += angle;
+	if(UD_stepper_judge == 0)
+	{
+		UD_angle_count = UD_target_angle - UD_curruent_angle;
+		if(UD_angle_count>UD_bu_to_angle || UD_angle_count<-UD_bu_to_angle)
+		{
+			if(UD_angle_count<0)
+			{
+				UD_dir = 1;
+				UD_angle_count = -RL_angle_count;
+			}
+			else 
+				UD_dir = 0;
+			PDout(6) = UD_dir;
+			UD_stepper_count = 0;
+			UD_stepper_judge = 1;
+			return 1;
+		}
+	}
+	UD_target_change = 1;
 	return 0;
 }
 
@@ -164,34 +219,66 @@ void stepper_stop(void)
 	stepperstop=1;
 }
 
-int soft_IRQ(void)
+void soft_IRQ(void)
 {
-	int res = 1;
-	stepper_count+=bu_to_angle;
-	if(stepper_count > angle_count)
+	if(bottom_stepper_judge)
 	{
-		set_time = 0;
-		reset_time *= 2;
-		if(dir == 0)
-			Curruent_angle+=stepper_count;
-		else
-			Curruent_angle-=stepper_count;
-		res = 0;
-		stepper_count = 0;
-		stepper_flat = 0;
-		stepper_turn(0, stepper_frequency);
+		bottom_stepper_count += bottom_bu_to_angle;
+		if(bottom_stepper_count > bottom_angle_count || bottom_target_change)
+		{
+//			set_time = 0;
+//			reset_time *= 2;
+			if(bottom_dir == 0)
+				bottom_curruent_angle += bottom_stepper_count;
+			else
+				bottom_curruent_angle -= bottom_stepper_count;
+			bottom_stepper_judge = 0;
+			bottom_stepper_count = 0;
+			bottom_stepper_turn(0);
+		}
 	}
-	if(stepperstop==1)
+	if(RL_stepper_judge)
 	{
-		set_time = 0;
-		reset_time *= 2;
-		res = 0;
-		Curruent_angle = 0;
-		Target_angle = Curruent_angle;
-		stepper_count = 0;
-		stepper_flat = 0;
-		stepper_turn(0, stepper_frequency);
-		stepperstop = 0;
+		RL_stepper_count += RL_bu_to_angle;
+		if(RL_stepper_count > RL_angle_count || RL_target_change)
+		{
+//			set_time = 0;
+//			reset_time *= 2;
+			if(RL_dir == 0)
+				RL_curruent_angle += RL_stepper_count;
+			else
+				RL_curruent_angle -= RL_stepper_count;
+			RL_stepper_judge = 0;
+			RL_stepper_count = 0;
+			RL_stepper_turn(0);
+		}
 	}
-	return res;
+	if(UD_stepper_judge)
+	{
+		UD_stepper_count += UD_bu_to_angle;
+		if(UD_stepper_count > UD_angle_count || UD_target_change)
+		{
+//			set_time = 0;
+//			reset_time *= 2;
+			if(UD_dir == 0)
+				UD_curruent_angle += UD_stepper_count;
+			else
+				UD_curruent_angle -= UD_stepper_count;
+			UD_stepper_judge = 0;
+			UD_stepper_count = 0;
+			UD_stepper_turn(0);
+		}
+	}
+//	if(stepperstop==1)
+//	{
+//		set_time = 0;
+//		reset_time *= 2;
+//		res = 0;
+//		Curruent_angle = 0;
+//		Target_angle = Curruent_angle;
+//		stepper_count = 0;
+//		stepper_flat = 0;
+//		stepper_turn(0, stepper_frequency);
+//		stepperstop = 0;
+//	}
 }
