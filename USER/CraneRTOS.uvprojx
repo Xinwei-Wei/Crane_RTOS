@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\SYSTEM\softiic;..\USER;..\FWLIB\inc;..\HARDWARE\OLED;..\HARDWARE\FREECARS;..\HARDWARE\ADC;..\HARDWARE\KEY;..\HARDWARE\PWM;..\HARDWARE\LED;..\HARDWARE\HC05;..\HARDWARE\EXTI;..\HARDWARE\BEEP;..\HARDWARE\MENU;..\HARDWARE\HC-SR04;..\HARDWARE\CCD;..\HARDWARE\Filter_Mathod;..\HARDWARE\ADC;..\HARDWARE\TF-Luna;..\uCOS-III\uC-CPU;..\uCOS-III\uC-CPU\ARM-Cortex-M4\RealView;..\uCOS-III\uC-LIB;..\uCOS-III\uC-LIB\Ports\ARM-Cortex-M4\RealView;..\uCOS-III\uCOS-III\Ports\ARM-Cortex-M4\Generic\RealView;..\uCOS-III\APP;..\uCOS-III\BSP;..\uCOS-III\uCOS-III\Source;..\HARDWARE\PID;..\HARDWARE\Mecanum;..\HARDWARE\ENCODER;..\HARDWARE\StepperMotor</IncludePath>
+              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\SYSTEM\softiic;..\USER;..\FWLIB\inc;..\HARDWARE\OLED;..\HARDWARE\FREECARS;..\HARDWARE\ADC;..\HARDWARE\KEY;..\HARDWARE\PWM;..\HARDWARE\LED;..\HARDWARE\HC05;..\HARDWARE\EXTI;..\HARDWARE\BEEP;..\HARDWARE\MENU;..\HARDWARE\HC-SR04;..\HARDWARE\CCD;..\HARDWARE\Filter_Mathod;..\HARDWARE\ADC;..\HARDWARE\TF-Luna;..\uCOS-III\uC-CPU;..\uCOS-III\uC-CPU\ARM-Cortex-M4\RealView;..\uCOS-III\uC-LIB;..\uCOS-III\uC-LIB\Ports\ARM-Cortex-M4\RealView;..\uCOS-III\uCOS-III\Ports\ARM-Cortex-M4\Generic\RealView;..\uCOS-III\APP;..\uCOS-III\BSP;..\uCOS-III\uCOS-III\Source;..\HARDWARE\PID;..\HARDWARE\Mecanum;..\HARDWARE\ENCODER;..\HARDWARE\StepperMotor;..\HARDWARE\SERVO</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -695,6 +695,11 @@
               <FileName>stepper_motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\StepperMotor\stepper_motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>servo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SERVO\servo.c</FilePath>
             </File>
           </Files>
         </Group>

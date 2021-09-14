@@ -11,7 +11,7 @@ u16 stepper_frequency=100;
 int bottom_dir, RL_dir, UD_dir, stepperstop=0;
 extern unsigned int set_time;
 extern unsigned int reset_time;
-double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/32, UD_bu_to_angle = 1.8/1;
+double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/1, UD_bu_to_angle = 1.8/1;
 extern int bottom_stepper_judge, RL_stepper_judge, UD_stepper_judge, stepper_judge;
 int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
 
@@ -76,7 +76,7 @@ void Stepper_Dir_Init(void)
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);//使能GPIOD时钟
 
     //GPIOD13初始化设置
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5;			//LED0和LED1对应IO口
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5;			//LED0和LED1对应IO口
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;		//普通输出模式
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;		//推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//100MHz
@@ -85,7 +85,7 @@ void Stepper_Dir_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7;
 	GPIO_Init(GPIOD, &GPIO_InitStructure);				//初始化GPIOB
 
-    GPIO_ResetBits(GPIOE, GPIO_Pin_4 | GPIO_Pin_5);					//GPIOA15设置高，灯灭
+    GPIO_ResetBits(GPIOE, GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5);					//GPIOA15设置高，灯灭
 	GPIO_ResetBits(GPIOD, GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7);
 }
 
@@ -105,7 +105,7 @@ void soft_TIM_start(u16 frequency)
 }
 
 
-int bottom_stepper_turn(double angle)//, u16 frequency)
+void bottom_stepper_turn(double angle)//, u16 frequency)
 {
 	angle *= 10;
 	//stepper_frequency = frequency;
@@ -124,18 +124,18 @@ int bottom_stepper_turn(double angle)//, u16 frequency)
 			}
 			else 
 				bottom_dir = 0;
-			PEout(4) = bottom_dir;
+			PEout(3) = bottom_dir;
 			bottom_stepper_count = 0;
 			//soft_TIM_start(frequency);
 			bottom_stepper_judge = 1;
-			return 1;
+			//return 1;
 		}
 	}
 	bottom_target_change = 1;
-	return 0;
+	//return 0;
 }
 
-int RL_stepper_turn(double angle)
+void RL_stepper_turn(double angle)
 {
 	RL_target_angle += angle;
 	if(RL_stepper_judge == 0)
@@ -145,46 +145,44 @@ int RL_stepper_turn(double angle)
 		{
 			if(RL_angle_count<0)
 			{
-				RL_dir = 1;
+				RL_dir = 0;
 				RL_angle_count = -RL_angle_count;
 			}
 			else 
-				RL_dir = 0;
+				RL_dir = 1;
 			PDout(4) = RL_dir;
 			RL_stepper_count = 0;
 			RL_stepper_judge = 1;
-			return 1;
 		}
 	}
-	RL_target_change = 1;
-	return 0;
+	else
+		RL_target_change = 1;
 }
 
-int UD_stepper_turn(double angle)
+void UD_stepper_turn(double angle)//第一层2600 1800 第二层5000
 {
 	UD_target_angle += angle;
 	if(UD_stepper_judge == 0)
 	{
-		printf("ok1");
 		UD_angle_count = UD_target_angle - UD_curruent_angle;
 		if(UD_angle_count>UD_bu_to_angle || UD_angle_count<-UD_bu_to_angle)
 		{
-			printf("ok2");
 			if(UD_angle_count<0)
 			{
 				UD_dir = 1;
-				UD_angle_count = -RL_angle_count;
+				UD_angle_count = -UD_angle_count;
 			}
 			else 
 				UD_dir = 0;
 			PDout(6) = UD_dir;
 			UD_stepper_count = 0;
 			UD_stepper_judge = 1;
-			return 1;
+			//return 1;
 		}
 	}
-	UD_target_change = 1;
-	return 0;
+	else
+		UD_target_change = 1;
+	//return 0;
 }
 
 //定时器9中断服务函数
@@ -221,7 +219,7 @@ void stepper_stop(void)
 	stepperstop=1;
 }
 
-void soft_IRQ(void)
+void Bottom_Soft_IRQ(void)
 {
 	if(bottom_stepper_judge)
 	{
@@ -239,6 +237,10 @@ void soft_IRQ(void)
 			bottom_stepper_turn(0);
 		}
 	}
+}
+
+void RL_Soft_IRQ(void)
+{
 	if(RL_stepper_judge)
 	{
 		RL_stepper_count += RL_bu_to_angle;
@@ -246,7 +248,7 @@ void soft_IRQ(void)
 		{
 //			set_time = 0;
 //			reset_time *= 2;
-			if(RL_dir == 0)
+			if(RL_dir == 1)
 				RL_curruent_angle += RL_stepper_count;
 			else
 				RL_curruent_angle -= RL_stepper_count;
@@ -255,9 +257,24 @@ void soft_IRQ(void)
 			RL_stepper_turn(0);
 		}
 	}
+//	if(stepperstop==1)
+//	{
+//		set_time = 0;
+//		reset_time *= 2;
+//		res = 0;
+//		Curruent_angle = 0;
+//		Target_angle = Curruent_angle;
+//		stepper_count = 0;
+//		stepper_flat = 0;
+//		stepper_turn(0, stepper_frequency);
+//		stepperstop = 0;
+//	}
+}
+
+void UD_Soft_IRQ(void)
+{
 	if(UD_stepper_judge)
 	{
-		printf("ok?");
 		UD_stepper_count += UD_bu_to_angle;
 		if(UD_stepper_count > UD_angle_count || UD_target_change)
 		{
@@ -284,4 +301,10 @@ void soft_IRQ(void)
 //		stepper_turn(0, stepper_frequency);
 //		stepperstop = 0;
 //	}
+}
+
+void bottom_turn_to(double angle)
+{
+	bottom_target_angle = angle;
+	bottom_stepper_turn(0);
 }

@@ -98,7 +98,7 @@ static  OS_TCB		AppTask_CCD_TCB;
 *                                             PERIPHERAL
 *********************************************************************************************************
 */
-
+#include "servo.h"
 #include "usart.h"
 #include "softiic.h"
 #include "delay.h"
@@ -119,6 +119,8 @@ static  OS_TCB		AppTask_CCD_TCB;
 #include "mecanum_control.h"
 #include "encoder.h"
 #include "stepper_motor.h"
+#include "control.h"
+
 
 /*
 *********************************************************************************************************

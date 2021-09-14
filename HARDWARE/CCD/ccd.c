@@ -5,15 +5,25 @@
 #include "adc.h"
 #include "pid.h"
 
+
+
+#define ture true
 #define CCD1_CLK  	PAout(11)
 #define CCD1_SI		PAout(12)
 #define CCD2_CLK	PCout(11)
 #define CCD2_SI		PCout(12)
 #define threshold1  2700
+#define line3_wide  10
+#define line5_wide  20
 
 u8 ccd_finish_flag;
 u16 ccd1_data[128];
 u16 ccd2_data[128];
+u8 stop_line = line5_wide;
+extern float targetSpeedY;
+extern int stop_judge;
+int EN_stop = 0;
+
 
 void CCD_Init(void)
 {
@@ -54,38 +64,51 @@ void CCD_IO(void)
 //  @since      v1.0
 //  Sample usage:               在isr.c里面先创建对应的中断函数，然后调用该函数(之后别忘记清除中断标志位)
 //-------------------------------------------------------------------------------------------------------------------
-void CCD_Collect(void)
+void CCD1_Collect(void)
 {
     u8 i = 0;
 
     CCD1_CLK=1;
-	CCD2_CLK=1;
     CCD1_SI=0;
-	CCD2_SI=0;
     CCD1_CLK=0;
-	CCD2_CLK=0;
     CCD1_SI=1;
-	CCD2_SI=1;
     CCD1_CLK=1;
-	CCD2_CLK=1;
     CCD1_SI=0;
-	CCD2_SI=0;
 
     for(i=0;i<128;i++)
     {
         CCD1_CLK=0;
-		CCD2_CLK=0;
         //这里可以同时采集两个CCD数据
         ccd1_data[i] = Get_Adc1();
-		ccd2_data[i] = Get_Adc2();
         CCD1_CLK=1;
-		CCD2_CLK=1;
     }
 
     //采集完成标志位置1
     ccd_finish_flag = 1;
 }
 
+void CCD2_Collect(void)
+{
+    u8 i = 0;
+
+	CCD2_CLK=1;
+	CCD2_SI=0;
+	CCD2_CLK=0;
+	CCD2_SI=1;
+	CCD2_CLK=1;
+	CCD2_SI=0;
+
+    for(i=0;i<128;i++)
+    {
+		CCD2_CLK=0;
+        //这里可以同时采集两个CCD数据
+		ccd2_data[i] = Get_Adc2();
+		CCD2_CLK=1;
+    }
+
+    //采集完成标志位置1
+    ccd_finish_flag = 1;
+}
 //-------------------------------------------------------------------------------------------------------------------
 //  @brief      TSL1401线阵CCD图像发送至上位机查看图像
 //  @param      uart_n          串口号
@@ -124,8 +147,7 @@ int find_line(void)
 	{
 		if(ccd1_data[i] > 2700 && ccd1_data[i+1]>2700 && ccd1_data[i+2] > 2700)
 		{
-			return i;
-			
+			return i;			
 		}
 	}
 	return -1;	
@@ -164,8 +186,29 @@ int Find_Line(u16 *data, int center, int threshold)
 			if(edge_count == 3)
 				break;
 		}
+		
+			
 		edge_right = i-3;
 		edge_count = 0;
+		
+		if(edge_right - edge_left > stop_line)
+		{
+			if(data == ccd2_data){
+				if(EN_stop)
+				{
+					if(targetSpeedY == 60)
+						targetSpeedY = 30;
+					else
+					{
+						stop_line = line3_wide;
+						targetSpeedY = 0;
+						stop_judge = 1;
+						EN_stop = 0;
+					}					
+				}
+			}
+		}
+		else EN_stop = 1;
 		
 		center = (edge_left + edge_right) / 2 + 0.5;
 		center = LIMIT(3, center, 124);
@@ -194,3 +237,20 @@ int Find_Line(u16 *data, int center, int threshold)
 		return center;
 	}
 }
+
+int Find_Line_first(u16 *data, int threshold)
+{
+	int i;
+	for(i=62; i<=66; i++)
+	{
+		if(data[i] > threshold)
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
+
+
+
