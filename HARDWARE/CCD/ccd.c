@@ -13,15 +13,15 @@
 #define CCD2_CLK	PCout(11)
 #define CCD2_SI		PCout(12)
 #define threshold1  2700
-#define line3_wide  10
-#define line5_wide  20
+#define line3_wide  25
+#define line5_wide  40
 
 u8 ccd_finish_flag;
 u16 ccd1_data[128];
 u16 ccd2_data[128];
 u8 stop_line = line5_wide;
 extern float targetSpeedY;
-extern int stop_judge;
+extern int stop_judge, slow_down_judge;
 int EN_stop = 0;
 
 
@@ -216,19 +216,203 @@ int Find_Line(u16 *data, int center, int threshold)
 	}
 	else
 	{
+		emergency_max = 0;
 		emergency_flag = 0;
+		emergency_count = 0;
 		for(i=0; i<=127; i++)
 		{
 			if(data[i] <= threshold)
-				emergency_count++;
-			else
 			{
-				emergency_count = 0;
+				emergency_count++;
+			}
+			else
+			{				
 				if(emergency_count > emergency_max)
 				{
 					emergency_max = emergency_count;
 					emergency_right = i-1;
 				}
+				emergency_count = 0;
+			}
+		}
+		printf("%d\r\n", emergency_max);
+		if(emergency_max >= 3)
+			center = emergency_right - emergency_max/2 - 0.5;
+		center = LIMIT(3, center, 124);
+		return center;
+	}
+}
+
+int CCD1_find_Line(int center, int threshold)
+{
+	int i, emergency_flag = 0, edge_count = 0, edge_left = 0, edge_right = 127;
+	int emergency_count = 0, emergency_max = 0, emergency_right = 0;
+	
+	for(i=center-2; i<=center+2; i++)
+	{
+		if(ccd1_data[i] > threshold)
+		{
+			emergency_flag = 1;
+			break;
+		}
+	}
+	
+	if(emergency_flag == 0)
+	{
+		for(i=center-3; i>=0; i--)
+		{
+			if(ccd1_data[i] > threshold)
+				edge_count++;
+			if(edge_count == 3)
+				break;
+		}
+		edge_left = i+3;
+		edge_count = 0;
+		
+		for(i=center+3; i<=127; i++)
+		{
+			if(ccd1_data[i] > threshold)
+				edge_count++;
+			if(edge_count == 3)
+				break;
+		}
+		
+			
+		edge_right = i-3;
+		edge_count = 0;
+		
+		if(edge_right - edge_left > line5_wide)
+		{
+			return center;
+		}
+		
+		center = (edge_left + edge_right) / 2 + 0.5;
+		center = LIMIT(3, center, 124);
+		return center;
+	}
+	else
+	{
+		emergency_max = 0;
+		emergency_flag = 0;
+		emergency_count = 0;
+		for(i=0; i<=127; i++)
+		{
+			if(ccd1_data[i] <= threshold)
+			{
+				emergency_count++;
+			}
+			else
+			{				
+				if(emergency_count > emergency_max)
+				{
+					emergency_max = emergency_count;
+					emergency_right = i-1;
+				}
+				emergency_count = 0;
+			}
+		}
+		if(emergency_max >= 3)
+			center = emergency_right - emergency_max/2 - 0.5;
+		center = LIMIT(3, center, 124);
+		return center;
+	}
+}
+
+int CCD2_find_Line(int center, int threshold)
+{
+	int i, emergency_flag = 0, edge_count = 0, edge_left = 0, edge_right = 127;
+	int emergency_count = 0, emergency_max = 0, emergency_right = 0;
+	static int time = 0;
+	
+	for(i=center-2; i<=center+2; i++)
+	{
+		if(ccd2_data[i] > threshold)
+		{
+			emergency_flag = 1;
+			break;
+		}
+	}
+	
+	if(emergency_flag == 0)
+	{
+		for(i=center-3; i>=0; i--)
+		{
+			if(ccd2_data[i] > threshold)
+				edge_count++;
+			if(edge_count == 3)
+				break;
+		}
+		
+		edge_left = i+3;
+		edge_count = 0;
+		
+		for(i=center+3; i<=127; i++)
+		{
+			if(ccd2_data[i] > threshold)
+				edge_count++;
+			if(edge_count == 3)
+				break;
+		}
+		
+			
+		edge_right = i-3;
+		edge_count = 0;
+		
+		if(edge_right - edge_left > stop_line)
+		{
+			if(EN_stop)
+			{
+				if(targetSpeedY == 60){
+					targetSpeedY = 30;
+					EN_stop = 0;
+					slow_down_judge = 1;
+				}
+				else
+				{
+					stop_line = line3_wide;
+					targetSpeedY = 0;
+					stop_judge = 1;
+					EN_stop = 0;
+				}	
+			}
+			time = 0;
+		}
+		else{
+			if(targetSpeedY != 0){
+				if(time > 5){
+					EN_stop = 1;
+				}
+				else{
+					time += 1;
+				}
+			}
+		}
+		
+		center = (edge_left + edge_right) / 2 + 0.5;
+		center = LIMIT(3, center, 124);
+		if(edge_left<4)
+			center = edge_right-15;
+		return center;
+	}
+	else
+	{
+		emergency_max = 0;
+		emergency_flag = 0;
+		emergency_count = 0;
+		for(i=0; i<=127; i++)
+		{
+			if(ccd2_data[i] <= threshold)
+			{
+				emergency_count++;
+			}
+			else
+			{				
+				if(emergency_count > emergency_max)
+				{
+					emergency_max = emergency_count;
+					emergency_right = i-1;
+				}
+				emergency_count = 0;
 			}
 		}
 		if(emergency_max >= 3)

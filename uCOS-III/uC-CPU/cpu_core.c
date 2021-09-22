@@ -119,7 +119,6 @@ static  const  CPU_INT08U  CPU_CntLeadZerosTbl[256] = {                         
 };
 #endif
 
-
 /*
 *********************************************************************************************************
 *                                       LOCAL GLOBAL VARIABLES

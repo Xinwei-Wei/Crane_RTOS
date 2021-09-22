@@ -14,6 +14,8 @@ void CCD1_Collect(void);
 void CCD2_Collect(void);
 void CCD_Init(void);
 int Find_Line(u16 *data, int center, int threshold);
+int CCD1_find_Line(int center, int threshold);
+int CCD2_find_Line(int center, int threshold);
 int Find_Line_first(u16 *data, int threshold);
 
 #endif
