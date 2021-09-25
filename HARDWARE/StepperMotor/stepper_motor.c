@@ -11,7 +11,7 @@ u16 stepper_frequency=100;
 int bottom_dir, RL_dir, UD_dir, stepperstop=0;
 extern unsigned int set_time;
 extern unsigned int reset_time;
-double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/32, UD_bu_to_angle = 1.8/32;
+double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/1, UD_bu_to_angle = 1.8/1;
 extern int bottom_stepper_judge, RL_stepper_judge, UD_stepper_judge, stepper_judge;
 int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
 
