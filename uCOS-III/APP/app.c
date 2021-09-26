@@ -302,6 +302,7 @@ static void	AppTask_Control(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	static int high = 1;
+	int tem_angle = 0;
 	OSTimeDlyHMSM(0u, 0u, 5u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	
 	
@@ -309,7 +310,7 @@ static void	AppTask_Control(void *p_arg)
 		
 	ccd2_center = 64; //根据初始情况修改
 	OSTaskResume(&AppTask_CCD2_TCB, &err);
-	//OSTaskResume(&AppTask_CCD1_TCB, &err);
+	OSTaskResume(&AppTask_CCD1_TCB, &err);
 	targetSpeedY = -30;
 	//angle[0]=300;
 
@@ -318,7 +319,7 @@ static void	AppTask_Control(void *p_arg)
 		if(slow_down_judge)
 		{
 			targetSpeedY = 20;
-			OSTaskSuspend(&AppTask_CCD1_TCB, &err);
+			//OSTaskSuspend(&AppTask_CCD1_TCB, &err);
 		}
 		if(stop_judge)
 		{
@@ -327,7 +328,7 @@ static void	AppTask_Control(void *p_arg)
 			{
 				stop_judge = 0;
 				targetSpeedY = 0;
-				printf("stop\r\n");
+				//printf("stop\r\n");
 				OSTaskResume(&AppTask_Receive_TCB, &err);
 				
 				while(!USART_judge)
@@ -382,12 +383,13 @@ static void	AppTask_Control(void *p_arg)
 						printf("start_turn\r\n");
 						//转90度弯
 						OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
+						targetSpeedX = 0;
 						targetSpeedW = 60;
-						OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+						OSTimeDlyHMSM(0u, 0u, 3u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 						CCD2_p = 1;
 						CCD1_p = 3;
 						CCD1_Collect();
-						while(!Find_Line_first(ccd1_data, 3200))
+						while(!Find_Line_first(ccd1_data, 2500))
 						{
 							CCD1_Collect();
 							OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -446,7 +448,10 @@ static void	AppTask_Control(void *p_arg)
 				
 				put_down_milk(((angle[2*(work_times-6)-1]/60)%2+1) , 1);
 				//取余-360
-				bottom_stepper_turn(angle[2*(work_times-6)]-angle[2*(work_times-6)-1]);
+				tem_angle = angle[2*(work_times-6)]-angle[2*(work_times-6)-1];
+				if(tem_angle > 180)tem_angle -= 360;
+				if(tem_angle < -180)tem_angle += 360;
+				bottom_stepper_turn(tem_angle);
 				OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 				while(bottom_stepper_judge)
 					OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -618,7 +623,7 @@ static void AppTask_CCD2(void *p_arg)
 	for(;;)
 	{
 		CCD2_Collect();
-		//ccd_send_data(USART2, ccd2_data);
+		ccd_send_data(USART2, ccd2_data);
 
 		ccd2_center = CCD2_find_Line(ccd2_center, 2500);
 		printf("ccd2_center %d\r\n", ccd2_center);
