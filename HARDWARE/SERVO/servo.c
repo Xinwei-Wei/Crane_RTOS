@@ -49,11 +49,11 @@ void set_servo_angle(int angle)
 
 void servo_open(void)
 {
-	set_servo_angle(0);
+	set_servo_angle(5);
 }
 
 
 void servo_close(void)
 {
-	set_servo_angle(45);
+	set_servo_angle(60);
 }

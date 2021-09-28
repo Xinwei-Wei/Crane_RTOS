@@ -13,8 +13,8 @@
 #define CCD2_CLK	PCout(11)
 #define CCD2_SI		PCout(12)
 #define threshold1  2700
-#define line3_wide  25
-#define line5_wide  40
+#define line3_wide  30
+#define line5_wide  70
 
 u8 ccd_finish_flag;
 u16 ccd1_data[128];

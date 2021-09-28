@@ -111,9 +111,9 @@ int control_step = 1;
 int angle[8]={0};
 int bottom_turn_judge = 1;
 int stop_judge = 0, USART_judge = 0, slow_down_judge = 0;
-int target_center = 64;
-float CCD1_p = 0.5, CCD2_p = 1;
-int a = 27;
+int target_center1 = 64, target_center2 = 66;
+float CCD1_p = 1, CCD2_p = 3;
+int a = 30;
 int work_times = 0;
 /*
 *********************************************************************************************************
@@ -318,7 +318,8 @@ static void	AppTask_Control(void *p_arg)
 	{	
 		if(slow_down_judge)
 		{
-			targetSpeedY = 20;
+			targetSpeedY = 30;
+			target_center1 = 66;
 			//OSTaskSuspend(&AppTask_CCD1_TCB, &err);
 		}
 		if(stop_judge)
@@ -326,6 +327,7 @@ static void	AppTask_Control(void *p_arg)
 			work_times++;
 			if(work_times<=6)
 			{
+				CCD2_p = 1;
 				stop_judge = 0;
 				targetSpeedY = 0;
 				//printf("stop\r\n");
@@ -345,8 +347,8 @@ static void	AppTask_Control(void *p_arg)
 				}
 				
 				
-				target_center = a;
-				a = 10;
+				target_center2 = a;
+				a = 8;
 				OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &err);
 				for(;;){
 					if(!targetSpeedX){
@@ -364,7 +366,7 @@ static void	AppTask_Control(void *p_arg)
 				{
 					angle[rev[0]] = angle[0];
 					grab_milk(high);
-					target_center = 64;
+					target_center2 = 64;
 					OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 					bottom_stepper_turn(120);
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
@@ -375,17 +377,17 @@ static void	AppTask_Control(void *p_arg)
 						OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 						angle[0] = 60;
 						high = 2;
-						targetSpeedY = 20;
+						targetSpeedY = 30;
 					}
 					else if(angle[0] == 420)
 					{
-						a = 118;
+						a = 110;
 						printf("start_turn\r\n");
 						//转90度弯
 						OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
 						targetSpeedX = 0;
 						targetSpeedW = 60;
-						OSTimeDlyHMSM(0u, 0u, 3u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+						OSTimeDlyHMSM(0u, 0u, 2u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
 						CCD2_p = 1;
 						CCD1_p = 3;
 						CCD1_Collect();
@@ -418,7 +420,7 @@ static void	AppTask_Control(void *p_arg)
 						OSTaskResume(&AppTask_UD_Stepper_TCB, &err);						
 					}	
 					else{
-						targetSpeedY = 20;
+						targetSpeedY = 30;
 					}
 				}
 			}
@@ -435,7 +437,7 @@ static void	AppTask_Control(void *p_arg)
 					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 				OSTaskSuspend(&AppTask_CCD1_TCB, &err);
 				
-				target_center = a;
+				target_center2 = a;
 				OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &err);
 //				for(;;){
 //					if(!targetSpeedX){
@@ -461,7 +463,7 @@ static void	AppTask_Control(void *p_arg)
 					OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 				put_down_milk(((angle[2*(work_times-6)]/60)%2+1) , 2);
 				
-				target_center = 64;
+				target_center2 = 64;
 				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 				
 				if(work_times<10)
@@ -492,7 +494,7 @@ static void	AppTask_Control(void *p_arg)
 //					targetSpeedY = 20;
 //				}
 //			}
-			target_center = 64;
+			target_center2 = 64;
 //			else if(rev[0] == 3)
 //			{				
 //				RL_stepper_turn(rev[1]*50);
@@ -623,13 +625,13 @@ static void AppTask_CCD2(void *p_arg)
 	for(;;)
 	{
 		CCD2_Collect();
-		ccd_send_data(USART2, ccd2_data);
+		//ccd_send_data(USART2, ccd2_data);
 
 		ccd2_center = CCD2_find_Line(ccd2_center, 2500);
-		printf("ccd2_center %d\r\n", ccd2_center);
+		printf("CCD2_center %d\r\n", ccd2_center);
 		
-		if(ccd2_center > target_center + 2 || ccd2_center < target_center - 2)
-			targetSpeedX =  (ccd2_center - target_center) * CCD2_p;
+		if(ccd2_center > target_center2 + 2 || ccd2_center < target_center2 - 2)
+			targetSpeedX = (ccd2_center - target_center2) * CCD2_p;
 		else targetSpeedX = 0;
 		//printf("targetSpeedX %d\r\n",targetSpeedX);
 		//printf("CCD2_error %d\r\n",ccd2_center - target_center);
@@ -653,8 +655,8 @@ static void AppTask_CCD1(void *p_arg)
 		//ccd_send_data(USART2, ccd1_data);
 		ccd1_center = CCD1_find_Line(ccd1_center, 2500);
 
-		if(ccd1_center > 66 || ccd1_center < 62)
-			targetSpeedW = -(ccd1_center - 64) * CCD1_p;
+		if(ccd1_center > target_center2+2 || ccd1_center < target_center2-2)
+			targetSpeedW = -(ccd1_center - target_center2) * CCD1_p;
 		else targetSpeedW = 0;
 		printf("CCD1_center %d\r\n",ccd1_center);
 		
