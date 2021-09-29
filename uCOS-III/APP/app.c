@@ -448,23 +448,6 @@ static void	AppTask_Control(void *p_arg)
 				targetSpeedY = 0;
 				printf("stop\r\n");
 				
-				//开启CCD1调整位置
-				OSTaskResume(&AppTask_CCD1_TCB, &err);
-				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-				while(targetSpeedW)
-					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
-				OSTaskSuspend(&AppTask_CCD1_TCB, &err);
-				
-				target_center2 = a;
-				OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &err);
-//				for(;;){
-//					if(!targetSpeedX){
-//						OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
-//						if(!targetSpeedX)
-//							break;
-//					}
-//					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
-//				}
 				
 				put_down_milk(((angle[2*(work_times-6)-1]/60)%2+1) , 1);
 				//取余-360
@@ -484,7 +467,7 @@ static void	AppTask_Control(void *p_arg)
 				target_center2 = 64;
 				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 				
-				if(work_times<10)
+				if(work_times<9)
 					targetSpeedY = 20;
 				
 				bottom_stepper_turn(angle[2*(work_times-6)+1]-angle[2*(work_times-6)]);
