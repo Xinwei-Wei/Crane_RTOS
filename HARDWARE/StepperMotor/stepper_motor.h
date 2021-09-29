@@ -5,8 +5,8 @@
 
 //high 1600 1800 3000 4200 5400
 #define RL1 800
-#define RL0 800
-#define RIGHT_TO_LEFT 2600
+#define RL0 900
+#define RIGHT_TO_LEFT 2700
 
 #define MILK_HIGH 600
 #define ONE_FLOAT_HIGH 700
