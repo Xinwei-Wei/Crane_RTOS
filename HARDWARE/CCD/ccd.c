@@ -12,7 +12,7 @@
 #define CCD1_SI		PAout(12)
 #define CCD2_CLK	PCout(11)
 #define CCD2_SI		PCout(12)
-#define threshold1  2700
+#define threshold1  2500
 #define line3_wide  30
 #define line5_wide  70
 

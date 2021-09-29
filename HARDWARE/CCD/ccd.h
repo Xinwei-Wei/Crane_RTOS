@@ -2,6 +2,8 @@
 #define __CCD_H
 #include "sys.h"
 
+#define THRESHOLD 1500
+
 void  Adc_Init(void);
 void  ccd_Init(void);
 u16 Get_Adc_Average(u8 ch,u8 times);
