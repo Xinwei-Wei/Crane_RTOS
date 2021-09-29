@@ -108,7 +108,7 @@ int ccd1_center = 64, ccd2_center = 64;
 unsigned int set_time = 0, reset_time = 100;
 int bottom_stepper_judge = 0, RL_stepper_judge = 0, UD_stepper_judge = 0, stepper_judge = 0;
 int control_step = 1;
-int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
+int angle[8]={0,0,180,60,240,120,300,0};
 int bottom_turn_judge = 1;
 int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = 0;
 int target_center1 = 68, target_center2 = 64;
@@ -373,33 +373,20 @@ static void	AppTask_Control(void *p_arg)
 				grab_milk(high);
 				target_center2 = 64;
 				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-				bottom_stepper_turn(120);
-				OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
-				angle[0] += 120;
-				if(angle[0] == 360)
-				{						
-					bottom_stepper_turn(60);
+				if(work_times == 3){
+					bottom_stepper_turn(-60);
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
-					angle[0] = 60;
-					high = 2;
+					angle[0] -= 60;
 					targetSpeedY = 30;
 				}
-				else if(angle[0] == 420)
-				{
-					for(i = 0; i < 6; i++){
-						if(guess_judge[i]){
-							tem_angle = 120*i;
-							if(tem_angle > 300){
-								tem_angle -= 300;
-							}
-							for(j = 1; j < 7; j++){
-								if(angle[j] == -1){
-									angle[j] = tem_angle;
-									break;
-								}
-							}
-						}
-					}
+				else if(work_times == 5){
+					bottom_stepper_turn(120);
+					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
+					angle[0] -= 240;
+					targetSpeedY = 30;
+				}
+				else if(work_times ==6){
+					
 					a = 105;
 					printf("start_turn\r\n");
 					//×ª90¶ÈÍä
@@ -436,11 +423,14 @@ static void	AppTask_Control(void *p_arg)
 					while(RL_stepper_judge)
 						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);	
 					UD_stepper_turn(-UD);
-					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);						
-				}	
-				else{
-					targetSpeedY = 30;
+					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 				}
+				else{
+					bottom_stepper_turn(120);
+					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
+					angle[0] += 120;
+					targetSpeedY = 30;
+				}	
 			}
 			else
 			{
