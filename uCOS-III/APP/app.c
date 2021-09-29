@@ -110,12 +110,12 @@ int bottom_stepper_judge = 0, RL_stepper_judge = 0, UD_stepper_judge = 0, steppe
 int control_step = 1;
 int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
 int bottom_turn_judge = 1;
-int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = 0;
+int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = {0};
 int target_center1 = 68, target_center2 = 64;
 float CCD1_p = 1, CCD2_p = 3;
-int a = 40;
+int a = 37;
 int work_times = 0;
-int guess_angle[6] = {0,120,240,180,300,60};
+int guess_angle[6] = {2,3,5,1,4,6};
 /*
 *********************************************************************************************************
 *                                         FUNCTION PROTOTYPES
@@ -279,20 +279,6 @@ static void AppTask_Receive(void *p_arg)
 				}
 			}
 			
-//			targetSpeedY = rev[2]*1000 + rev[3]*100 + rev[4]*10 + rev[5];
-//			if(rev[1] == 0)targetSpeedY*=-1;
-//			printf("%f\r\n",targetSpeedY);
-//			if(RL_stepper_turn(targetSpeedY))
-//				OSTaskResume(&AppTask_Stepper_TCB, &err);
-//			if(rev[0] == 0)
-//				put_down_milk(rev[1]);
-//			else if(rev[0] == 1)
-//				grab_milk(rev[1]);
-			
-			
-//			leftfront_pid.kp = rev[3] + rev[4]/10.0 + rev[5]/100.0;
-//			leftfront_pid.ki = rev[6] + rev[7]/10.0 + rev[8]/100.0;
-//			leftfront_pid.kd = rev[9] + rev[10]/10.0 + rev[11]/100.0;
 		}
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
@@ -313,12 +299,10 @@ static void	AppTask_Control(void *p_arg)
 	OSTaskResume(&AppTask_CCD2_TCB, &err);
 	OSTaskResume(&AppTask_CCD1_TCB, &err);
 	targetSpeedY = -35;
-	angle[0] = 0;
-	angle[7] = 0;
 
 	for(;;)
 	{	
-		int i = 0, j = 0;
+		int i, j = 0;
 		if(slow_down_judge)
 		{
 			targetSpeedY = 30;
@@ -335,7 +319,7 @@ static void	AppTask_Control(void *p_arg)
 				targetSpeedY = 0;
 				//printf("stop\r\n");
 				
-				if(angle[0] != 300){
+				if(work_times != 6){
 					OSTaskResume(&AppTask_CCD1_TCB, &err);
 					OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 					while(targetSpeedW)
@@ -343,12 +327,13 @@ static void	AppTask_Control(void *p_arg)
 					OSTaskSuspend(&AppTask_CCD1_TCB, &err);
 				}
 				
-				OSTaskResume(&AppTask_Receive_TCB, &err);				
+				OSTaskResume(&AppTask_Receive_TCB, &err);
+				i = 0;				
 				while(!USART_judge){
 					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 					i++;					
 					if(i > 500){
-						guess_judge[work_times-1] = 1;
+						rev[0] = guess_angle[work_times-1];
 						break;
 					}
 				}
@@ -360,6 +345,9 @@ static void	AppTask_Control(void *p_arg)
 				OSTimeDlyHMSM(0u, 0u, 0u, 50u, OS_OPT_TIME_HMSM_STRICT, &err);
 				for(;;){
 					if(!targetSpeedX){
+						if(work_times == 1){
+							OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+						}
 						OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
 						if(!targetSpeedX)
 							break;
@@ -368,9 +356,9 @@ static void	AppTask_Control(void *p_arg)
 				}
 				
 				printf("grab\r\n");
-				if(!guess_judge[work_times-1]){
-					angle[rev[0]] = angle[0];
-				}
+//				if(!guess_judge[work_times-1]){
+				angle[rev[0]] = angle[0];
+//				}
 				grab_milk(high);
 				target_center2 = 64;
 				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -388,23 +376,24 @@ static void	AppTask_Control(void *p_arg)
 					targetSpeedY = 30;
 				}
 				else if(work_times ==6){
-					for(i = 0; i < 6; i++){
-						if(guess_judge[i]){
-							if(angle[i%3+1] == -1){
-								angle[i%3+1] = guess_angle[i];
-							}
-							else if(angle[i%3+4] == -1){
-								angle[i%3+4] = guess_angle[i];
-							}
-							else{
-								for(j = 1; j < 7; j++){
-									if(angle[j] == -1){
-										angle[j] = guess_angle[i];
-									}
-								}
-							}
-						}
-					}
+//					for(i = 0; i < 6; i++){
+//						if(guess_judge[i]){
+//							if(angle[i%3+1] == -1){
+//								angle[i%3+1] = guess_angle[i];
+//							}
+//							else if(angle[i%3+4] == -1){
+//								angle[i%3+4] = guess_angle[i];
+//							}
+//							else{
+//								for(j = 1; j < 7; j++){
+//									if(angle[j] == -1){
+//										angle[j] = guess_angle[i];
+//										break;
+//									}
+//								}
+//							}
+//						}
+//					}
 					a = 105;
 					printf("start_turn\r\n");
 					//转90度弯
@@ -427,7 +416,7 @@ static void	AppTask_Control(void *p_arg)
 					OSTaskResume(&AppTask_CCD2_TCB, &err);
 
 					angle[0] = 0;
-					bottom_stepper_turn(angle[1]+120);
+					bottom_stepper_turn(120+angle[1]);
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 					while(UD_stepper_judge)
 						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -477,7 +466,10 @@ static void	AppTask_Control(void *p_arg)
 				if(work_times<9)
 					targetSpeedY = 20;
 				
-				bottom_stepper_turn(angle[2*(work_times-6)+1]-angle[2*(work_times-6)]);
+				tem_angle = angle[2*(work_times-6)+1]-angle[2*(work_times-6)];
+				if(tem_angle > 180)tem_angle -= 360;
+				if(tem_angle < -180)tem_angle += 360;
+				bottom_stepper_turn(tem_angle);
 				OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 				
 			}
@@ -994,8 +986,6 @@ static void grab_milk(int a)
 		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 		while(UD_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		while(bottom_stepper_judge)
-			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		RL_stepper_turn(RL1);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
@@ -1027,8 +1017,6 @@ static void grab_milk(int a)
 		UD_stepper_turn(TWO_FLOAT_HIGH + UD);
 		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 		while(UD_stepper_judge)
-			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		while(bottom_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		RL_stepper_turn(RL1);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
@@ -1067,6 +1055,8 @@ static void put_down_milk(int a, int b)//初始高度5000
 		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 		while(UD_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+		while(bottom_stepper_judge)
+			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		RL_stepper_turn(-RL0);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
@@ -1102,6 +1092,8 @@ static void put_down_milk(int a, int b)//初始高度5000
 //		OSTaskResume(&AppTask_Stepper_TCB, &err);
 //		while(UD_stepper_judge)
 //			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+		while(bottom_stepper_judge)
+			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		RL_stepper_turn(-RL0);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
