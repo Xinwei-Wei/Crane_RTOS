@@ -108,13 +108,14 @@ int ccd1_center = 64, ccd2_center = 64;
 unsigned int set_time = 0, reset_time = 100;
 int bottom_stepper_judge = 0, RL_stepper_judge = 0, UD_stepper_judge = 0, stepper_judge = 0;
 int control_step = 1;
-int angle[8]={0,0,180,60,240,120,300,0};
+int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
 int bottom_turn_judge = 1;
 int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = 0;
 int target_center1 = 68, target_center2 = 64;
 float CCD1_p = 1, CCD2_p = 3;
-int a = 30;
+int a = 40;
 int work_times = 0;
+int guess_angle[6] = {0,120,240,180,300,60};
 /*
 *********************************************************************************************************
 *                                         FUNCTION PROTOTYPES
@@ -378,6 +379,7 @@ static void	AppTask_Control(void *p_arg)
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 					angle[0] -= 60;
 					targetSpeedY = 30;
+					high = 2;
 				}
 				else if(work_times == 5){
 					bottom_stepper_turn(120);
@@ -386,7 +388,23 @@ static void	AppTask_Control(void *p_arg)
 					targetSpeedY = 30;
 				}
 				else if(work_times ==6){
-					
+					for(i = 0; i < 6; i++){
+						if(guess_judge[i]){
+							if(angle[i%3+1] == -1){
+								angle[i%3+1] = guess_angle[i];
+							}
+							else if(angle[i%3+4] == -1){
+								angle[i%3+4] = guess_angle[i];
+							}
+							else{
+								for(j = 1; j < 7; j++){
+									if(angle[j] == -1){
+										angle[j] = guess_angle[i];
+									}
+								}
+							}
+						}
+					}
 					a = 105;
 					printf("start_turn\r\n");
 					//×ª90¶ÈÍä

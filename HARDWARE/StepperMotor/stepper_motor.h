@@ -11,7 +11,7 @@
 #define MILK_HIGH 600
 #define ONE_FLOAT_HIGH 700
 #define TWO_FLOAT_HIGH 1500
-#define UD 400
+#define UD 380
 
 void Stepper_Init(void);
 void bottom_stepper_turn(double angle);
