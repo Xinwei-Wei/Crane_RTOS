@@ -205,10 +205,10 @@ int main(void)
 
 static  void  AppTaskStart (void *p_arg)
 {
-    OS_ERR  err;
+	OS_ERR  err;
 	(void)p_arg;
 
-    BSP_Init();                                                 /* Initialize BSP functions                             */
+	BSP_Init();                                                 /* Initialize BSP functions                             */
 	BSP_Tick_Init();                                            /* Initialize Tick Services.                            */
 
 
@@ -229,19 +229,19 @@ static  void  AppTaskStart (void *p_arg)
 	Periph_Init();
 
     while (DEF_TRUE)
-	{                                          					/* Task body, always written as an infinite loop.       */
-		LED0 = 0;
-        OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+		{                                          					/* Task body, always written as an infinite loop.       */
+			LED0 = 0;
+      OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
 
-		LED0 = 1;
-        OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+			LED0 = 1;
+			OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
     }
 }
 
 void Periph_Init()
 {
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);				//设置系统中断优先级分组2
-//	LED_Init();
+		NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);				//设置系统中断优先级分组2
+//LED_Init();
 	KEY_Init();
 	uart_init(115200);
 }
@@ -309,7 +309,7 @@ static void	AppTask_Control(void *p_arg)
 			target_center1 = 66;
 			OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
 			targetSpeedX = 0;
-			targetSpeedW = 60;
+			targetSpeedW = -60;
 			OSTimeDlyHMSM(0u, 0u, 5u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 			CCD2_p = 1;
 			CCD1_p = 3;
@@ -381,25 +381,6 @@ static void	AppTask_Control(void *p_arg)
 					targetSpeedY = 30;
 				}
 				else if(work_times ==6){
-//					for(i = 0; i < 6; i++){
-//						if(guess_judge[i]){
-//							if(angle[i%3+1] == -1){
-//								angle[i%3+1] = guess_angle[i];
-//							}
-//							else if(angle[i%3+4] == -1){
-//								angle[i%3+4] = guess_angle[i];
-//							}
-//							else{
-//								for(j = 1; j < 7; j++){
-//									if(angle[j] == -1){
-//										angle[j] = guess_angle[i];
-//										break;
-//									}
-//								}
-//							}
-//						}
-//					}
-					a = 105;
 					printf("start_turn\r\n");
 					//转90度弯
 					OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
@@ -426,16 +407,10 @@ static void	AppTask_Control(void *p_arg)
 					while(UD_stepper_judge)
 						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 					targetSpeedY = 60;
-					UD_stepper_turn(TWO_FLOAT_HIGH+UD);
+					UD_stepper_turn(TWO_FLOAT_HIGH);
 					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 					while(UD_stepper_judge)
-						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-					RL_stepper_turn(RIGHT_TO_LEFT);
-					OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
-					while(RL_stepper_judge)
 						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);	
-					UD_stepper_turn(-UD);
-					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 				}
 				else{
 					bottom_stepper_turn(120);
@@ -531,8 +506,7 @@ static void	AppTask_Control(void *p_arg)
 //			}
 
 			
-		}
-		
+		}	
 		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 	
@@ -550,7 +524,6 @@ static void AppTask_USART(void *p_arg)
 	
 	for(;;)
 	{
-
 		OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
@@ -1062,7 +1035,7 @@ static void put_down_milk(int a, int b)//初始高度5000
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		while(bottom_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(-RL0);
+		RL_stepper_turn(RL1);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -1076,7 +1049,7 @@ static void put_down_milk(int a, int b)//初始高度5000
 		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 		while(UD_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(RL0);
+		RL_stepper_turn(-RL1);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -1099,7 +1072,7 @@ static void put_down_milk(int a, int b)//初始高度5000
 //			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		while(bottom_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(-RL0);
+		RL_stepper_turn(RL1);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -1116,7 +1089,7 @@ static void put_down_milk(int a, int b)//初始高度5000
 		while(UD_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 		
-		RL_stepper_turn(RL0);
+		RL_stepper_turn(-RL1);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);

@@ -19,7 +19,6 @@ OS_ERR  err;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 
-	//此部分需手动修改IO口设置
 	
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;

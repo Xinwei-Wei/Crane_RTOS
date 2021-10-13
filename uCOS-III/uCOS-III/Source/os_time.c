@@ -514,7 +514,7 @@ void  OSTimeSet (OS_TICK   ticks,
     CPU_CRITICAL_ENTER();
     OSTickCtr = ticks;
     CPU_CRITICAL_EXIT();
-   *p_err     = OS_ERR_NONE;
+    *p_err = OS_ERR_NONE;
 }
 
 
