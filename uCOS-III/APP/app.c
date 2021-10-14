@@ -112,7 +112,7 @@ int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
 int bottom_turn_judge = 1;
 int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = {0};
 int target_center1 = 68, target_center2 = 64;
-float CCD1_p = 1, CCD2_p = 3;
+float CCD1_p = 0.1, CCD2_p = 0.3;
 int a = 37;
 int work_times = 0;
 int guess_angle[6] = {2,3,5,1,4,6};
@@ -298,6 +298,7 @@ static void	AppTask_Control(void *p_arg)
 	ccd2_center = 64; //根据初始情况修改
 	OSTaskResume(&AppTask_CCD2_TCB, &err);
 	OSTaskResume(&AppTask_CCD1_TCB, &err);
+	//UD_stepper_turn(UD);
 	targetSpeedY = -35;
 
 	for(;;)
@@ -307,6 +308,7 @@ static void	AppTask_Control(void *p_arg)
 		{
 			targetSpeedY = 0;
 			target_center1 = 66;
+			OSTaskSuspend(&AppTask_CCD1_TCB, &err);  //关闭线程CCD2
 			OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
 			targetSpeedX = 0;
 			targetSpeedW = -60;
@@ -352,10 +354,10 @@ static void	AppTask_Control(void *p_arg)
 				while(!USART_judge){
 					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 					i++;					
-					if(i > 500){
-						rev[0] = guess_angle[work_times-1];
-						break;
-					}
+//					if(i > 500){
+//						rev[0] = guess_angle[work_times-1];
+//						break;
+//					}
 				}
 				OSTaskSuspend(&AppTask_Receive_TCB, &err);
 				USART_judge = 0;		
@@ -630,7 +632,7 @@ static void AppTask_CCD1(void *p_arg)
 	for(;;)
 	{
 		CCD1_Collect();
-		//ccd_send_data(USART2, ccd1_data);
+		//;;ccd_send_data(USART2, ccd1_data);
 		ccd1_center = CCD1_find_Line(ccd1_center, THRESHOLD);
 
 		if(ccd1_center > target_center2+2 || ccd1_center < target_center2-2)
