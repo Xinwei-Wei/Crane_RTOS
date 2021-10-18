@@ -362,10 +362,10 @@ int CCD2_find_Line(int center, int threshold)
 		{
 			if(EN_stop)
 			{
-				if(targetSpeedY == 60){
+				if(targetSpeedY > 40){
 					if(edge_right - edge_left > 50)
 					{
-						targetSpeedY = 20;
+						targetSpeedY = 30;
 						EN_stop = 0;
 						slow_down_judge = 1;
 					}

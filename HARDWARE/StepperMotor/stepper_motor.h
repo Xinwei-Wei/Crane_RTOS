@@ -4,14 +4,14 @@
 #include "includes.h"
 
 //high 1600 1800 3000 4200 5400
-#define RL1 800
+#define RL1 1050
 #define RL0 900
 #define RIGHT_TO_LEFT 2700
 
 #define MILK_HIGH 600
 #define ONE_FLOAT_HIGH 700
-#define TWO_FLOAT_HIGH 1500
-#define UD 380
+#define TWO_FLOAT_HIGH 1250
+#define UD 350
 
 void Stepper_Init(void);
 void bottom_stepper_turn(double angle);
