@@ -2,7 +2,7 @@
 #define __CCD_H
 #include "sys.h"
 
-#define THRESHOLD 1500
+#define THRESHOLD 2500
 
 void  Adc_Init(void);
 void  ccd_Init(void);

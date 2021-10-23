@@ -10,7 +10,7 @@
 
 #define MILK_HIGH 600
 #define ONE_FLOAT_HIGH 700
-#define TWO_FLOAT_HIGH 1250
+#define TWO_FLOAT_HIGH 1600
 #define UD 350
 
 void Stepper_Init(void);

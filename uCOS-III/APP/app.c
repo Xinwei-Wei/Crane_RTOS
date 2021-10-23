@@ -112,9 +112,9 @@ int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
 int bottom_turn_judge = 1;
 int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = {0};
 int target_center1 = 68, target_center2 = 64;
-float CCD1_p = 0.1, CCD2_p = 0.3;
+float CCD1_p = 1, CCD2_p = 3;
 int a = 37;
-int work_times = 0;
+int work_times = -1;
 int guess_angle[6] = {2,3,5,1,4,6};
 /*
 *********************************************************************************************************
@@ -269,38 +269,38 @@ static void AppTask_Receive(void *p_arg)
 			if(Read_Bit() == 0xff)
 			{
 				printf("receive 0xff\r\n");
-				for(rev_num=0; rev_num<2; rev_num++)
+				for(rev_num=0; rev_num<1; rev_num++)
 					rev[rev_num] = Read_Bit()-48;
 				printf("receive %d\r\n",rev[0]);
-				if(rev[0] == 3)
-				{				
-					RL_stepper_turn(rev[1]*50);
-					OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
-					while(RL_stepper_judge)
-						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-				}
-				else if(rev[0] == 2)
-				{	
-					if(rev[1] == 0)
-						bottom_stepper_turn(-60);
-					else
-						bottom_stepper_turn(60);
-					bottom_stepper_turn(-rev[1]*10);
-					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
-					while(bottom_stepper_judge)
-						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-				}
-				else if(rev[0] == 4)
-				{			
-					UD_stepper_turn(rev[1]*50);
-					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
-					while(UD_stepper_judge)
-						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-				}
-				else if(rev[0] == 5)
-				{			
-					set_servo_angle(10*rev[1]);
-				}
+//				if(rev[0] == 3)
+//				{				
+//					RL_stepper_turn(rev[1]*50);
+//					OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
+//					while(RL_stepper_judge)
+//						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+//				}
+//				else if(rev[0] == 2)
+//				{	
+//					if(rev[1] == 0)
+//						bottom_stepper_turn(-60);
+//					else
+//						bottom_stepper_turn(60);
+//					bottom_stepper_turn(-rev[1]*10);
+//					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
+//					while(bottom_stepper_judge)
+//						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+//				}
+//				else if(rev[0] == 4)
+//				{			
+//					UD_stepper_turn(rev[1]*50);
+//					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
+//					while(UD_stepper_judge)
+//						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+//				}
+//				else if(rev[0] == 5)
+//				{			
+//					set_servo_angle(10*rev[1]);
+//				}
 				if(Read_Bit() == 0xee)
 				{
 					printf("receive 0xee\r\n");
@@ -336,6 +336,7 @@ static void	AppTask_Control(void *p_arg)
 		int i, j = 0;
 		if(slow_down_judge)
 		{
+			slow_down_judge = 0;
 			targetSpeedY = 0;
 			target_center1 = 66;
 			OSTaskSuspend(&AppTask_CCD1_TCB, &err);  //关闭线程CCD2
@@ -343,14 +344,15 @@ static void	AppTask_Control(void *p_arg)
 			targetSpeedX = 0;
 			targetSpeedW = -60;
 			OSTimeDlyHMSM(0u, 0u, 5u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-			CCD2_p = 1;
-			CCD1_p = 3;
+//			CCD2_p = 1;
+//			CCD1_p = 3;
 			CCD1_Collect();
 			while(!Find_Line_first(ccd1_data, THRESHOLD))
 			{
 				CCD1_Collect();
 				OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 			}
+			
 			
 			OSTaskResume(&AppTask_CCD1_TCB, &err);
 			OSTaskResume(&AppTask_CCD2_TCB, &err);
@@ -364,14 +366,16 @@ static void	AppTask_Control(void *p_arg)
 		if(stop_judge)
 		{
 			work_times++;
-			if(work_times<=6)
+			if(work_times==0){
+				stop_judge = 0;
+				UD_stepper_turn(-UD);
+				OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
+				while(UD_stepper_judge)
+					OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+				targetSpeedY = 30;
+			}
+			else if(work_times<=6)
 			{
-				if(work_times==1){
-					UD_stepper_turn(-UD);
-					OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
-					while(UD_stepper_judge)
-						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-				}
 				
 				stop_judge = 0;
 				targetSpeedY = 0;
@@ -405,16 +409,16 @@ static void	AppTask_Control(void *p_arg)
 				grab_milk(high);
 				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 				if(work_times == 3){
-					bottom_stepper_turn(-60);
+					bottom_stepper_turn(180);
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
-					angle[0] -= 60;
+					angle[0] = 60;
 					targetSpeedY = 30;
 					high = 2;
 				}
 				else if(work_times == 5){
 					bottom_stepper_turn(120);
+					angle[0] += 120;
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
-					angle[0] -= 240;
 					targetSpeedY = 30;
 					OSTaskSuspend(&AppTask_CCD1_TCB, &err);
 				}
@@ -422,6 +426,9 @@ static void	AppTask_Control(void *p_arg)
 					printf("start_turn\r\n");
 					//转90度弯
 					OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
+					targetSpeedY = -20;
+					OSTimeDlyHMSM(0u, 0u, 0u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
+					targetSpeedY = 0;
 					targetSpeedX = 0;
 					targetSpeedW = 60;
 					OSTimeDlyHMSM(0u, 0u, 2u, 500u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -440,7 +447,7 @@ static void	AppTask_Control(void *p_arg)
 					OSTaskResume(&AppTask_CCD2_TCB, &err);
 
 					angle[0] = 0;
-					bottom_stepper_turn(angle[1]*60);
+					bottom_stepper_turn(angle[1]+60);
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 					while(UD_stepper_judge)
 						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -459,6 +466,9 @@ static void	AppTask_Control(void *p_arg)
 			}
 			else
 			{
+				if(work_times == 8){
+					OSTaskSuspend(&AppTask_CCD1_TCB, &err);
+				}
 				stop_judge = 0;
 				targetSpeedY = 0;
 				printf("stop\r\n");
@@ -542,6 +552,7 @@ static void AppTask_Mecanum(void *p_arg)
 {
 	OS_ERR  err;
 	(void)p_arg;
+	static int time =20;
 	
 	targetSpeedY = 0;
 	Motor_IO_Init();
@@ -563,30 +574,30 @@ static void AppTask_Mecanum(void *p_arg)
 		targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
 		
 		if(rightfront_pwm < 0)
-			rightfront_pid.error = (targetMecanum[0])+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;
+			rightfront_pid.error = (targetMecanum[0])+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*15/time;
 		else
-			rightfront_pid.error = (targetMecanum[0])-((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*1.5;	
+			rightfront_pid.error = (targetMecanum[0])-((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*15/time;	
 		//printf("TIM2->CNT %d\r\n", TIM2->CNT);
 		TIM2->CNT = 0;
 
 		if(leftfront_pwm < 0)
-			leftfront_pid.error = (targetMecanum[1])+((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM3->CNT)*1.5;
+			leftfront_pid.error = (targetMecanum[1])+((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM3->CNT)*15/time;
 		else
-			leftfront_pid.error = (targetMecanum[1])-((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM3->CNT)*1.5;	
+			leftfront_pid.error = (targetMecanum[1])-((TIM3->CNT<0xffff-TIM3->CNT) ? TIM3->CNT : 0xffff-TIM3->CNT)*15/time;	
 		//printf("TIM3->CNT %d\r\n", TIM3->CNT);
 		TIM3->CNT = 0;
 		
 		if(leftrear_pwm < 0)
-			leftrear_pid.error = (targetMecanum[2])+((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;
+			leftrear_pid.error = (targetMecanum[2])+((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*15/time;
 		else
-			leftrear_pid.error = (targetMecanum[2])-((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*1.5;	
+			leftrear_pid.error = (targetMecanum[2])-((TIM4->CNT<0xffff-TIM4->CNT) ? TIM4->CNT : 0xffff-TIM4->CNT)*15/time;	
 		//printf("TIM4->CNT %d\r\n", TIM4->CNT);
 		TIM4->CNT = 0;
 		
 		if(rightrear_pwm < 0)
-			rightrear_pid.error = (targetMecanum[3])+((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;
+			rightrear_pid.error = (targetMecanum[3])+((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*15/time;
 		else
-			rightrear_pid.error = (targetMecanum[3])-((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*1.5;	
+			rightrear_pid.error = (targetMecanum[3])-((TIM5->CNT<0xffffffff-TIM5->CNT) ? TIM5->CNT : 0xffffffff-TIM5->CNT)*15/time;	
 		//printf("TIM5->CNT %d\r\n", TIM5->CNT);
 		TIM5->CNT = 0;
 
@@ -600,7 +611,7 @@ static void AppTask_Mecanum(void *p_arg)
 		Control_Dir(3, LIMIT(-99, leftrear_pwm,   99));
 		Control_Dir(4, LIMIT(-99, rightrear_pwm,  99));
 		
-		OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
+		OSTimeDlyHMSM(0u, 0u, 0u, 20u, OS_OPT_TIME_HMSM_STRICT, &err);
 	}
 }
 
@@ -640,7 +651,7 @@ static void AppTask_CCD1(void *p_arg)
 	for(;;)
 	{
 		CCD1_Collect();
-		//;;ccd_send_data(USART2, ccd1_data);
+		//ccd_send_data(USART2, ccd1_data);
 		ccd1_center = CCD1_find_Line(ccd1_center, THRESHOLD);
 
 		if(ccd1_center > target_center2+2 || ccd1_center < target_center2-2)

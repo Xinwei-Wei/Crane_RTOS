@@ -22,7 +22,8 @@ u16 ccd2_data[128];
 u8 stop_line = line5_wide;
 extern float targetSpeedY;
 extern int stop_judge, slow_down_judge;
-int EN_stop = 0;
+int EN_stop = 0, EN_EN_stop = 0;
+int longest = 1000;
 
 
 void CCD_Init(void)
@@ -360,35 +361,36 @@ int CCD2_find_Line(int center, int threshold)
 		
 		if(edge_right - edge_left > stop_line)
 		{
-			if(EN_stop)
-			{
+			if(EN_EN_stop){	
 				if(targetSpeedY > 40){
-					if(edge_right - edge_left > 50)
-					{
-						targetSpeedY = 30;
-						EN_stop = 0;
+					if(edge_right - edge_left > 50){
+						EN_EN_stop = 0;
+						targetSpeedY = 0;
 						slow_down_judge = 1;
+						longest = 50;
 					}
 				}
 				else
-				{
-					stop_line = line3_wide;
-					targetSpeedY = 0;
-					stop_judge = 1;
-					EN_stop = 0;
-				}	
-			}
+				{	
+					if(edge_right - edge_left < longest){
+						EN_EN_stop = 0;					
+						EN_stop = 1;
+					}
+				}
+			}	
 			time = 0;
 		}
 		else{
-			if(targetSpeedY != 0){
-				if(time > 5){
-					EN_stop = 1;
+			if(time>2){
+				if(EN_stop){
+					targetSpeedY = 0;
+					EN_stop=0;
+					stop_line = line3_wide;
+					stop_judge=1;
 				}
-				else{
-					time += 1;
-				}
+				EN_EN_stop = 1;
 			}
+			time++;
 		}
 		
 		center = (edge_left + edge_right) / 2 + 0.5;
