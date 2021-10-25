@@ -265,6 +265,7 @@ static void AppTask_Receive(void *p_arg)
 	for(;;)
 	{
 		printf("a\r\n");
+		OSTimeDlyHMSM(0u, 0u, 0u, 30u, OS_OPT_TIME_HMSM_STRICT, &err);
 		if(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) != RESET)
 		{
 			if(Read_Bit() == 0xff)
@@ -309,8 +310,7 @@ static void AppTask_Receive(void *p_arg)
 					OSTaskSuspend(&AppTask_Receive_TCB, &err);
 				}
 			}			
-		}
-    OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
+		}		
 	}
 }
 
@@ -339,31 +339,37 @@ static void	AppTask_Control(void *p_arg)
 		if(slow_down_judge)
 		{
 			slow_down_judge = 0;
-			targetSpeedY = 0;
-			target_center1 = 66;
-			OSTaskSuspend(&AppTask_CCD1_TCB, &err);  //关闭线程CCD2
-			OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
-			targetSpeedX = 0;
-			targetSpeedW = -60;
-			OSTimeDlyHMSM(0u, 0u, 5u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-//			CCD2_p = 1;
-//			CCD1_p = 3;
-			CCD1_Collect();
-			while(!Find_Line_first(ccd1_data, THRESHOLD))
-			{
+			OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &err);
+			if(slow_down_judge){
+				slow_down_judge = 0;
+				targetSpeedY = 0;
+				OSTaskSuspend(&AppTask_CCD1_TCB, &err);  //关闭线程CCD2
+				OSTaskSuspend(&AppTask_CCD2_TCB, &err);  //关闭线程CCD2
+				target_center1 = 66;
+				
+				targetSpeedX = 0;
+				targetSpeedW = -60;
+				OSTimeDlyHMSM(0u, 0u, 5u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 				CCD1_Collect();
-				OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+				while(!Find_Line_first(ccd1_data, THRESHOLD))
+				{
+					CCD1_Collect();
+					OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+				}
+				
+				
+				OSTaskResume(&AppTask_CCD1_TCB, &err);
+				OSTaskResume(&AppTask_CCD2_TCB, &err);
+				while(targetSpeedW || targetSpeedY)
+					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);				
+				targetSpeedY = 30;
+				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+				stop_judge = 0;
 			}
+//			else{
+//				targetSpeedY = 45;
+//			}
 			
-			
-			OSTaskResume(&AppTask_CCD1_TCB, &err);
-			OSTaskResume(&AppTask_CCD2_TCB, &err);
-			while(targetSpeedW || targetSpeedY)
-				OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
-			targetSpeedY = 30;
-			//OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-					
-			//OSTaskSuspend(&AppTask_CCD1_TCB, &err);
 		}
 		if(stop_judge)
 		{
