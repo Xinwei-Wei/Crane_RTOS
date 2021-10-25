@@ -54,3 +54,4 @@ dkms.conf
 # Keil MDK
 *.uvguix.*
 uCOS-III/OBJ/*
+FreeRTOS/Project/Flash/*
