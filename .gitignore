@@ -55,3 +55,4 @@ dkms.conf
 *.uvguix.*
 uCOS-III/OBJ/*
 FreeRTOS/Project/Flash/*
+FreeRTOS/Project/RTE/*

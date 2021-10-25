@@ -457,7 +457,7 @@ static void	AppTask_Control(void *p_arg)
 					OSTaskResume(&AppTask_CCD2_TCB, &err);
 
 					angle[0] = 0;
-					bottom_stepper_turn(angle[1]+60);
+					bottom_stepper_turn(angle[1]+65);
 					OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
 					while(UD_stepper_judge)
 						OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -485,7 +485,7 @@ static void	AppTask_Control(void *p_arg)
 				
 				put_down_milk(((angle[2*(work_times-6)-1]/60)%2+1) , 1);
 				//取余-360
-				tem_angle = angle[2*(work_times-6)]-angle[2*(work_times-6)-1];
+				tem_angle = angle[2*(work_times-6)]-angle[2*(work_times-6)-1]+10;
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
@@ -504,7 +504,7 @@ static void	AppTask_Control(void *p_arg)
 				if(work_times<9)
 					targetSpeedY = 20;
 				
-				tem_angle = angle[2*(work_times-6)+1]-angle[2*(work_times-6)];
+				tem_angle = angle[2*(work_times-6)+1]-angle[2*(work_times-6)]+10;
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
@@ -1070,6 +1070,10 @@ static void put_down_milk(int a, int b)//初始高度5000
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+		bottom_stepper_turn(-10);
+		OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
+		while(bottom_stepper_judge)
+			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 //		UD_stepper_turn(-750);
 //		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 //		while(UD_stepper_judge)
@@ -1107,7 +1111,10 @@ static void put_down_milk(int a, int b)//初始高度5000
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		
+		bottom_stepper_turn(-10);
+		OSTaskResume(&AppTask_Bottom_Stepper_TCB, &err);
+		while(bottom_stepper_judge)
+			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 //		UD_stepper_turn(UD);
 //		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 //		while(UD_stepper_judge)
