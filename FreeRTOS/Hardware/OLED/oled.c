@@ -3,6 +3,9 @@
 #include "oledfont.h"
 #include "math.h"
 #include "usart.h"
+#include "includes.h"
+
+#define	delay_ms(x) vTaskDelay(x)
 
 //OLED的显存
 //存放格式如下.

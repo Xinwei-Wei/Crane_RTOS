@@ -3,8 +3,9 @@
 #include "usart.h"
 #include "adc.h"
 #include "pid.h"
+#include "includes.h"
 
-
+#define	delay_ms(x) vTaskDelay(x)
 
 #define ture true
 #define CCD1_CLK  	PAout(11)

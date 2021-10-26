@@ -1,6 +1,14 @@
 #include "hc-sr04.h"
 #include "usart.h"
+#include "includes.h"
 
+#define	delay_ms(x) vTaskDelay(x)
+
+static void delay_us(u32 nus)
+{
+	nus *= 14;	// 主频168MHZ
+	for(; nus--; );
+}
 
 int overcount;
 //定时器5初始化

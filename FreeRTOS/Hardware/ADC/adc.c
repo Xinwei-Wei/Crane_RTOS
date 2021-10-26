@@ -1,4 +1,7 @@
-#include "adc.h"	 
+#include "adc.h"
+#include "includes.h"
+
+#define	delay_ms(x) vTaskDelay(x)
 
 /****************************
 ADC			1 	2 	3

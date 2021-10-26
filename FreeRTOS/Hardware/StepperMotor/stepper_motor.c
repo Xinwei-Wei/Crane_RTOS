@@ -15,7 +15,6 @@ double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/1, UD_bu_to_angle = 1.8/
 extern int bottom_stepper_judge, RL_stepper_judge, UD_stepper_judge, stepper_judge;
 int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
 
-OS_ERR  err;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 

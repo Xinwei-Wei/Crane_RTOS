@@ -1,5 +1,10 @@
 #include "softiic.h"
 
+static void delay_us(u32 nus)
+{
+	nus *= 14;	// Ö÷Æµ168MHZ
+	for(; nus--; );
+}
 
 //³õÊ¼»¯IIC
 void IIC_Init(void)
@@ -151,5 +156,3 @@ u8 IICwriteBytes(u8 dev, u8 reg, u8 length, u8* data){
     return 1; //status == 0;
 	
 }
-
-

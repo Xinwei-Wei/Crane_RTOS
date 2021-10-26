@@ -193,12 +193,13 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 
 int Read_Bit(void)
 {
-	OS_ERR  err;
 	int i = 0;
-	while(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) == RESET){
-		OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
+	while(USART_GetFlagStatus(USART1 , USART_FLAG_RXNE) == RESET)
+	{
+		vTaskDelay(5);
 		i++;
-		if(i%400 == 0){
+		if(i%400 == 0)
+		{
 			printf("a/r/n");
 		}
 	}
