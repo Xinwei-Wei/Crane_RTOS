@@ -363,7 +363,7 @@ static void	AppTask_Control(void *p_arg)
 				while(targetSpeedW || targetSpeedY)
 					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);				
 				targetSpeedY = 30;
-				OSTimeDlyHMSM(0u, 0u, 1u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+				OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
 				stop_judge = 0;
 			}
 //			else{
@@ -563,6 +563,7 @@ static void AppTask_Mecanum(void *p_arg)
 	OS_ERR  err;
 	(void)p_arg;
 	static int time =20;
+	static int tem_w;
 	
 	targetSpeedY = 0;
 	Motor_IO_Init();
@@ -581,7 +582,18 @@ static void AppTask_Mecanum(void *p_arg)
 	for(;;)
 	{
 		//printf("x:%.2f y:%.2f w:%.2f\r\n",targetSpeedX, targetSpeedY, targetSpeedW);
-		targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
+		tem_w = targetSpeedW > 0 ? targetSpeedW : -targetSpeedW;
+		if(targetSpeedY>0){
+			if(targetSpeedY>tem_w/2){
+				targetMecanum = moto_caculate(targetSpeedX, targetSpeedY-tem_w/2, targetSpeedW);
+			}
+			else{
+				targetMecanum = moto_caculate(targetSpeedX, 0, targetSpeedW);
+			}
+		}
+		else{
+			targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
+		}
 		
 		if(rightfront_pwm < 0)
 			rightfront_pid.error = (targetMecanum[0])+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*15/time;
