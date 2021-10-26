@@ -36,15 +36,15 @@
 **********************************************************************************************************
 */
 
-#define		vTask_Control_PRIO			9
-#define		vTask_Receive_PRIO			7
-#define		vTask_USART_PRIO			8
-#define		vTask_Mecanum_PRIO			6
-#define		vTask_CCD2_PRIO				5
+#define		vTask_Control_PRIO			2
+#define		vTask_Receive_PRIO			9
+#define		vTask_USART_PRIO			1
+#define		vTask_Mecanum_PRIO			4
+#define		vTask_CCD2_PRIO				4
 #define		vTask_CCD1_PRIO				4
-#define		vTask_BottomStepper_PRIO	10
-#define		vTask_RLStepper_PRIO		11
-#define		vTask_UDStepper_PRIO		12
+#define		vTask_BottomStepper_PRIO	3
+#define		vTask_RLStepper_PRIO		3
+#define		vTask_UDStepper_PRIO		3
 
 /*
 **********************************************************************************************************
@@ -529,7 +529,8 @@ static void vTask_Mecanum(void *pvParameters)
 		Control_Dir(3, LIMIT(-99, leftrear_pwm,   99));
 		Control_Dir(4, LIMIT(-99, rightrear_pwm,  99));
 		
-		vTaskDelayUntil(&xLastWakeTime, 20);
+//		vTaskDelayUntil(&xLastWakeTime, 20);
+		vTaskDelay(20);
 	}
 }
 
@@ -556,7 +557,8 @@ static void vTask_CCD2(void *pvParameters)
 //		push(2,leftrear_pid.error+100);
 //		push(3,leftrear_pwm);
 //		sendDataToScope();
-		vTaskDelayUntil(&xLastWakeTime, 20);
+//		vTaskDelayUntil(&xLastWakeTime, 20);
+		vTaskDelay(20);
 	}
 }
 
@@ -579,7 +581,8 @@ static void vTask_CCD1(void *pvParameters)
 //		push(2,leftrear_pid.error+100);
 //		push(3,leftrear_pwm);
 //		sendDataToScope();
-		vTaskDelayUntil(&xLastWakeTime, 20);
+//		vTaskDelayUntil(&xLastWakeTime, 20);
+		vTaskDelay(20);
 	}
 }
 
