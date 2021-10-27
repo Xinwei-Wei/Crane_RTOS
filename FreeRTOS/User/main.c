@@ -284,7 +284,6 @@ static void	vTask_Control(void *pvParameters)
 					vTaskDelay(10);			
 				targetSpeedY = 30;
 				vTaskDelay(2000);
-				stop_judge = 0;
 			}
 //			else{
 //				targetSpeedY = 45;
@@ -560,6 +559,7 @@ static void vTask_CCD2(void *pvParameters)
 	vTaskSuspend(xHandleTask_CCD2);
 	for(;;)
 	{
+		myIO = !myIO;
 		CCD2_Collect();
 		//ccd_send_data(USART2, ccd2_data);
 
@@ -820,7 +820,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 //			vTaskDelay(5);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
-		RL_stepper_turn(RL1);
+		RL_stepper_turn(RL1+50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
@@ -840,7 +840,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 		while(UD_stepper_judge)
 			vTaskDelay(5);
 		
-		RL_stepper_turn(-RL1);
+		RL_stepper_turn(-RL1-50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
