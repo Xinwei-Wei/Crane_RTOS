@@ -115,7 +115,7 @@ int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
 int bottom_turn_judge = 1;
 int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = {0};
 int target_center1 = 68, target_center2 = 64;
-float CCD1_p = 1, CCD2_p = 3;
+float CCD1_p = 0.5, CCD2_p = 1.5;
 int a = 37;
 int work_times = -1;
 int guess_angle[6] = {2,3,5,1,4,6};
@@ -548,8 +548,8 @@ static void vTask_Mecanum(void *pvParameters)
 		Control_Dir(3, LIMIT(-99, leftrear_pwm,   99));
 		Control_Dir(4, LIMIT(-99, rightrear_pwm,  99));
 		
-//		vTaskDelayUntil(&xLastWakeTime, 20);
-		vTaskDelay(20);
+		vTaskDelayUntil(&xLastWakeTime, 20);
+//		vTaskDelay(20);
 	}
 }
 
@@ -576,8 +576,8 @@ static void vTask_CCD2(void *pvParameters)
 //		push(2,leftrear_pid.error+100);
 //		push(3,leftrear_pwm);
 //		sendDataToScope();
-//		vTaskDelayUntil(&xLastWakeTime, 20);
-		vTaskDelay(20);
+		vTaskDelayUntil(&xLastWakeTime, 20);
+//		vTaskDelay(20);
 	}
 }
 
@@ -600,8 +600,8 @@ static void vTask_CCD1(void *pvParameters)
 //		push(2,leftrear_pid.error+100);
 //		push(3,leftrear_pwm);
 //		sendDataToScope();
-//		vTaskDelayUntil(&xLastWakeTime, 20);
-		vTaskDelay(20);
+		vTaskDelayUntil(&xLastWakeTime, 20);
+//		vTaskDelay(20);
 	}
 }
 
@@ -877,12 +877,12 @@ static void AppTaskCreate (void)
                  &xHandleTask_Receive );	/* ÈÎÎñ¾ä±ú  */
 	
 	
-	xTaskCreate( vTask_USART,
-                 "vTask USART",
-                 512,
-                 NULL,
-                 vTask_USART_PRIO,
-                 &xHandleTask_USART );
+//	xTaskCreate( vTask_USART,
+//                 "vTask USART",
+//                 512,
+//                 NULL,
+//                 vTask_USART_PRIO,
+//                 &xHandleTask_USART );
 	
 	xTaskCreate( vTask_Mecanum,
                  "vTask Mecanum",
