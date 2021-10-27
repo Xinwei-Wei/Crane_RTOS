@@ -461,17 +461,17 @@ static void	vTask_Control(void *pvParameters)
 }
 
 
-static void vTask_USART(void *pvParameters)
-{
-	
-	vTaskDelay(1000);
-	
-	
-	for(;;)
-	{
-		vTaskDelay(2000);
-	}
-}
+//static void vTask_USART(void *pvParameters)
+//{
+//	
+//	vTaskDelay(1000);
+//	
+//	
+//	for(;;)
+//	{
+//		vTaskDelay(2000);
+//	}
+//}
 
 static void vTask_Mecanum(void *pvParameters)
 {
