@@ -119,6 +119,7 @@ float CCD1_p = 1, CCD2_p = 3;
 int a = 37;
 int work_times = -1;
 int guess_angle[6] = {2,3,5,1,4,6};
+extern int EN_EN_stop;
 
 /*
 *********************************************************************************************************
@@ -273,14 +274,16 @@ static void	vTask_Control(void *pvParameters)
 					CCD1_Collect();
 					vTaskDelay(5);
 				}
-				
+				targetSpeedW = 0;
+				EN_EN_stop = 0;
 				
 				vTaskResume(xHandleTask_CCD1);
 				vTaskResume(xHandleTask_CCD2);
-				while(targetSpeedW || targetSpeedY)
+				vTaskDelay(10);	
+				while(targetSpeedW || targetSpeedX)
 					vTaskDelay(10);			
 				targetSpeedY = 30;
-				vTaskDelay(1000);
+				vTaskDelay(2000);
 				stop_judge = 0;
 			}
 //			else{
@@ -300,9 +303,7 @@ static void	vTask_Control(void *pvParameters)
 				targetSpeedY = 30;
 			}
 			else if(work_times<=6)
-			{
-				
-				
+			{				
 				stop_judge = 0;
 				targetSpeedY = 0;
 				vTaskDelay(1000);
@@ -476,6 +477,7 @@ static void vTask_USART(void *pvParameters)
 static void vTask_Mecanum(void *pvParameters)
 {
 	static int time =20;
+	static int tem_w;
 	TickType_t xLastWakeTime;
 	
 	targetSpeedY = 0;
@@ -495,7 +497,18 @@ static void vTask_Mecanum(void *pvParameters)
 	for(;;)
 	{
 		//printf("x:%.2f y:%.2f w:%.2f\r\n",targetSpeedX, targetSpeedY, targetSpeedW);
-		targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
+		tem_w = targetSpeedW > 0 ? targetSpeedW : -targetSpeedW;
+		if(targetSpeedY>0){
+			if(targetSpeedY > tem_w/2){
+				targetMecanum = moto_caculate(targetSpeedX, targetSpeedY - tem_w/2, targetSpeedW);
+			}
+			else{
+				targetMecanum = moto_caculate(targetSpeedX, 0, targetSpeedW);
+			}
+		}
+		else{
+			targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
+		}
 		
 		if(rightfront_pwm < 0)
 			rightfront_pid.error = (targetMecanum[0])+((TIM2->CNT<0xffffffff-TIM2->CNT) ? TIM2->CNT : 0xffffffff-TIM2->CNT)*15/time;
@@ -696,7 +709,7 @@ static void GrabMilk(int a)
 		vTaskResume(xHandleTask_UDStepper);
 		while(UD_stepper_judge)
 			vTaskDelay(5);
-		RL_stepper_turn(RL1);
+		RL_stepper_turn(RL1+50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
@@ -711,7 +724,7 @@ static void GrabMilk(int a)
 //		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 //		while(UD_stepper_judge)
 //			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(-RL1);
+		RL_stepper_turn(-RL1-50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
