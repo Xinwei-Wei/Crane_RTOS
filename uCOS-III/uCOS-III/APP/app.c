@@ -116,6 +116,7 @@ float CCD1_p = 1, CCD2_p = 3;
 int a = 37;
 int work_times = -1;
 int guess_angle[6] = {2,3,5,1,4,6};
+extern int EN_EN_stop;
 /*
 *********************************************************************************************************
 *                                         FUNCTION PROTOTYPES
@@ -356,15 +357,17 @@ static void	AppTask_Control(void *p_arg)
 					CCD1_Collect();
 					OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
 				}
+				targetSpeedW = 0;
 				
-				
+				EN_EN_stop = 0;
 				OSTaskResume(&AppTask_CCD1_TCB, &err);
 				OSTaskResume(&AppTask_CCD2_TCB, &err);
-				while(targetSpeedW || targetSpeedY)
-					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);				
+				OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
+				while(targetSpeedW || targetSpeedX)
+					OSTimeDlyHMSM(0u, 0u, 0u, 10u, OS_OPT_TIME_HMSM_STRICT, &err);
 				targetSpeedY = 30;
-				OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
-				stop_judge = 0;
+				//OSTimeDlyHMSM(0u, 0u, 2u, 0u, OS_OPT_TIME_HMSM_STRICT, &err);
+				//stop_judge = 0;
 			}
 //			else{
 //				targetSpeedY = 45;
@@ -589,6 +592,7 @@ static void AppTask_Mecanum(void *p_arg)
 			}
 			else{
 				targetMecanum = moto_caculate(targetSpeedX, 0, targetSpeedW);
+				//targetMecanum = moto_caculate(targetSpeedX, targetSpeedY, targetSpeedW);
 			}
 		}
 		else{
@@ -1007,7 +1011,7 @@ static void grab_milk(int a)
 		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 		while(UD_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(RL1);
+		RL_stepper_turn(RL1+100);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
@@ -1022,7 +1026,7 @@ static void grab_milk(int a)
 //		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 //		while(UD_stepper_judge)
 //			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(-RL1);
+		RL_stepper_turn(-RL1-100);
 		OSTaskResume(&AppTask_RL_Stepper_TCB, &err);
 		while(RL_stepper_judge)
 			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
