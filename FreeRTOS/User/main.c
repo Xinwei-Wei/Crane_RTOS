@@ -161,10 +161,16 @@ int main(void)
 
 void Periph_Init()
 {
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);		//设置系统中断优先级分组2
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);		//设置系统中断优先级分组4
+	
+	taskENTER_CRITICAL();
+	
 //	LED_Init();
 	KEY_Init();
 	uart_init(115200);
+	TIM8_PWM_Init(500-1, 33-1);
+	
+	taskEXIT_CRITICAL();
 }
 
 /*
@@ -474,7 +480,7 @@ static void vTask_Mecanum(void *pvParameters)
 	
 	targetSpeedY = 0;
 	Motor_IO_Init();
-	TIM8_PWM_Init(500-1, 33-1);
+//	TIM8_PWM_Init(500-1, 33-1);
 	Encoder_Init_TIM2();
 	Encoder_Init_TIM3();
 	Encoder_Init_TIM4();
