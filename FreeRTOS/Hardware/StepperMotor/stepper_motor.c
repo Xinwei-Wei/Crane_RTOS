@@ -18,15 +18,14 @@ int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
 {		 					 
-	
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, ENABLE);  	//TIM9时钟使能
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE); 	//使能PORTB时钟	
-	GPIO_PinAFConfig(GPIOE,GPIO_PinSource5,GPIO_AF_TIM9); //GPIOB14复用为定时器12
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE); 	//使能GPIOE时钟	
+	GPIO_PinAFConfig(GPIOE,GPIO_PinSource5,GPIO_AF_TIM9); //GPIOE5复用为定时器9
 	
 	
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;			//GPIOE5
@@ -62,9 +61,8 @@ void TIM9_PWM_Init(u16 arr,u16 psc)
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0x02; //抢占优先级1
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority=0x02; //子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
- 									  
-} 
+	NVIC_Init(&NVIC_InitStructure);									  
+}
 
 void Stepper_Dir_Init(void)
 {

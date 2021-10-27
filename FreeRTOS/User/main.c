@@ -547,14 +547,15 @@ static void vTask_Mecanum(void *pvParameters)
 		Control_Dir(3, LIMIT(-99, leftrear_pwm,   99));
 		Control_Dir(4, LIMIT(-99, rightrear_pwm,  99));
 		
-		vTaskDelayUntil(&xLastWakeTime, 20);
-//		vTaskDelay(20);
+//		vTaskDelayUntil(&xLastWakeTime, 20);
+		vTaskDelay(20);
 	}
 }
 
 static void vTask_CCD2(void *pvParameters)
 {
 	TickType_t xLastWakeTime;
+	IO_Init();
 	CCD_Init();
 	vTaskSuspend(xHandleTask_CCD2);
 	for(;;)
@@ -576,8 +577,8 @@ static void vTask_CCD2(void *pvParameters)
 //		push(2,leftrear_pid.error+100);
 //		push(3,leftrear_pwm);
 //		sendDataToScope();
-		vTaskDelayUntil(&xLastWakeTime, 20);
-//		vTaskDelay(20);
+//		vTaskDelayUntil(&xLastWakeTime, 20);
+		vTaskDelay(20);
 	}
 }
 
@@ -600,8 +601,8 @@ static void vTask_CCD1(void *pvParameters)
 //		push(2,leftrear_pid.error+100);
 //		push(3,leftrear_pwm);
 //		sendDataToScope();
-		vTaskDelayUntil(&xLastWakeTime, 20);
-//		vTaskDelay(20);
+//		vTaskDelayUntil(&xLastWakeTime, 20);
+		vTaskDelay(20);
 	}
 }
 
