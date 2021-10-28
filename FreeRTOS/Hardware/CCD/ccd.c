@@ -282,7 +282,7 @@ int CCD1_find_Line(int center, int threshold)
 		edge_right = i-3;
 		edge_count = 0;
 		
-		if(edge_right - edge_left > line5_wide)
+		if(edge_right - edge_left > line5_wide || edge_left < 5)
 		{
 			return center;
 		}
@@ -383,7 +383,7 @@ int CCD2_find_Line(int center, int threshold)
 		else{
 			if(time>2){
 				if(EN_stop){
-					targetSpeedY = 0;
+					//targetSpeedY = 0;
 					EN_stop=0;
 					stop_line = line3_wide;
 					stop_judge=1;

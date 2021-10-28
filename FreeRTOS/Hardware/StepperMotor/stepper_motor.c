@@ -6,14 +6,14 @@ double bottom_target_angle = 0, RL_target_angle = 0, UD_target_angle = 0;
 double bottom_curruent_angle = 0, RL_curruent_angle = 0, UD_curruent_angle = 0;
 double bottom_angle_count = 0, RL_angle_count = 0, UD_angle_count = 0;
 double bottom_stepper_count = 0, RL_stepper_count = 0, UD_stepper_count = 0;
-int stepper_flat = 0;
 u16 stepper_frequency=100;
 int bottom_dir, RL_dir, UD_dir, stepperstop=0;
 extern unsigned int set_time;
 extern unsigned int reset_time;
-double bottom_bu_to_angle = 1.8/2, RL_bu_to_angle = 1.8/1, UD_bu_to_angle = 1.8/1;
+double bottom_bu_to_angle = 1.8/16, RL_bu_to_angle = 1.8/1, UD_bu_to_angle = 1.8/1;
 extern int bottom_stepper_judge, RL_stepper_judge, UD_stepper_judge, stepper_judge;
 int bottom_target_change = 0, RL_target_change = 0, UD_target_change = 0;
+double bottom_v;
 
 
 void TIM9_PWM_Init(u16 arr,u16 psc)
@@ -64,6 +64,8 @@ void TIM9_PWM_Init(u16 arr,u16 psc)
 	NVIC_Init(&NVIC_InitStructure);									  
 }
 
+
+
 void Stepper_Dir_Init(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
@@ -72,7 +74,7 @@ void Stepper_Dir_Init(void)
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);//使能GPIOD时钟
 
     //GPIOD13初始化设置
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5;			//LED0和LED1对应IO口
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_4;			//LED0和LED1对应IO口
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;		//普通输出模式
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;		//推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	//100MHz
@@ -81,23 +83,26 @@ void Stepper_Dir_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7;
 	GPIO_Init(GPIOD, &GPIO_InitStructure);				//初始化GPIOB
 
-    GPIO_ResetBits(GPIOE, GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5);					//GPIOA15设置高，灯灭
+    GPIO_ResetBits(GPIOE, GPIO_Pin_3 | GPIO_Pin_4);					//GPIOA15设置高，灯灭
 	GPIO_ResetBits(GPIOD, GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7);
 }
 
 void Stepper_Init(void)
 {
-	//TIM9_PWM_Init(arr, psc);
+	TIM9_PWM_Init(100-1, 21-1);
 	Stepper_Dir_Init();
 }
 
 
 
-void soft_TIM_start(u16 frequency)
+void TIM9_start(u16 frequency)
 {
-	u16 temp_arr=1000/frequency; 
-	set_time = temp_arr/2;
-	reset_time = set_time;
+	bottom_v = 1;
+	u16 temp_arr=10000/frequency-1; 
+	TIM_SetAutoreload(TIM9,temp_arr);//设定自动重装值	
+	TIM_SetCompare1(TIM9,temp_arr>>1); //匹配值2等于重装值一半，是以占空比为50%	
+	TIM_SetCounter(TIM9,0);//计数器清零
+	TIM_Cmd(TIM9, ENABLE);  //使能TIM12
 }
 
 
@@ -122,13 +127,10 @@ void bottom_stepper_turn(double angle)//, u16 frequency)
 				bottom_dir = 0;
 			PEout(3) = bottom_dir;
 			bottom_stepper_count = 0;
-			//soft_TIM_start(frequency);
+			TIM9_start(1);
 			bottom_stepper_judge = 1;
-			//return 1;
 		}
 	}
-	bottom_target_change = 1;
-	//return 0;
 }
 
 void RL_stepper_turn(double angle)
@@ -176,38 +178,40 @@ void UD_stepper_turn(double angle)//第一层2600 1800 第二层5000
 			//return 1;
 		}
 	}
-	else
-		UD_target_change = 1;
 	//return 0;
 }
 
 //定时器9中断服务函数
 void TIM1_BRK_TIM9_IRQHandler(void)
 {
-//	CPU_SR_ALLOC();
-//	CPU_CRITICAL_ENTER();
-//	OSIntEnter();
-//	CPU_CRITICAL_EXIT(); 
-//	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
-//	{
-//		stepper_count+=bu_to_angle;
-//		if(stepper_count > angle_count || stepperstop==1)
-//		{
-//			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
-//			if(dir == 0)
-//				Curruent_angle+=stepper_count;
-//			else
-//				Curruent_angle-=stepper_count;
-//			TIM_Cmd(TIM9, DISABLE);
-//			stepper_count = 0;
-//			stepper_flat = 0;
-//			stepper_turn(0, stepper_frequency, tcb);
-//			stepperstop = 0;
-//		}
-//	}
-//	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
-//	OSIntExit();
-//	TIM_Cmd(TIM9, DISABLE);
+	int tem_arr;
+	if(TIM_GetITStatus(TIM9,TIM_IT_Update) == SET) //溢出中断
+	{
+		bottom_stepper_count+=bottom_bu_to_angle;
+		if(bottom_stepper_count > bottom_angle_count)
+		{
+			TIM_SetCompare1(TIM9,0);	//修改比较值，修改占空比			
+			if(bottom_dir == 0)
+				bottom_curruent_angle+=bottom_stepper_count;
+			else
+				bottom_curruent_angle-=bottom_stepper_count;
+			TIM_Cmd(TIM9, DISABLE);
+			bottom_stepper_count = 0;
+			bottom_stepper_judge = 0;	
+		}
+		else if(bottom_stepper_count > bottom_angle_count-40*bottom_bu_to_angle){
+			bottom_v -= 0.05;
+		}
+		else{
+			if(bottom_v<5){
+				bottom_v += 0.05;
+			}
+		}
+		tem_arr = (int)(10000/bottom_v - 1);
+		TIM_SetAutoreload(TIM9,tem_arr);//设定自动重装值	
+		TIM_SetCompare1(TIM9,tem_arr>>1); //匹配值2等于重装值一半，是以占空比为50%	
+	}
+	TIM_ClearITPendingBit(TIM9,TIM_IT_Update);  //清除中断标志位
 }
 
 void stepper_stop(void)

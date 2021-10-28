@@ -54,11 +54,11 @@
 
 static	void	AppTaskCreate		(void);
 static	void	vTask_Receive		(void *pvParameters);
-static	void	vTask_USART			(void *pvParameters);
+//static	void	vTask_USART			(void *pvParameters);
 static	void	vTask_Mecanum		(void *pvParameters);
 static	void	vTask_CCD2			(void *pvParameters);
 static	void	vTask_CCD1			(void *pvParameters);
-static	void	vTask_BottomStepper	(void *pvParameters);
+//static	void	vTask_BottomStepper	(void *pvParameters);
 static	void	vTask_RLStepper		(void *pvParameters);
 static	void	vTask_UDStepper		(void *pvParameters);
 static	void	vTask_Control		(void *pvParameters);
@@ -70,11 +70,11 @@ static	void	vTask_Control		(void *pvParameters);
 */
 
 static	TaskHandle_t	xHandleTask_Receive			= NULL;
-static	TaskHandle_t	xHandleTask_USART			= NULL;
+//static	TaskHandle_t	xHandleTask_USART			= NULL;
 static	TaskHandle_t	xHandleTask_Mecanum			= NULL;
 static	TaskHandle_t	xHandleTask_CCD2			= NULL;
 static	TaskHandle_t	xHandleTask_CCD1			= NULL;
-static	TaskHandle_t	xHandleTask_BottomStepper	= NULL;
+//static	TaskHandle_t	xHandleTask_BottomStepper	= NULL;
 static	TaskHandle_t	xHandleTask_RLStepper		= NULL;
 static	TaskHandle_t	xHandleTask_UDStepper		= NULL;
 static	TaskHandle_t	xHandleTask_Control			= NULL;
@@ -170,7 +170,9 @@ void Periph_Init()
 	KEY_Init();
 	uart_init(115200);
 	TIM8_PWM_Init(500-1, 33-1);
-	
+	Stepper_EN_Init();
+	Servo_Init();	
+	Stepper_Init();
 	taskEXIT_CRITICAL();
 }
 
@@ -337,7 +339,7 @@ static void	vTask_Control(void *pvParameters)
 				vTaskDelay(1000);
 				if(work_times == 3){
 					bottom_stepper_turn(180);
-					vTaskResume(xHandleTask_BottomStepper);
+					//vTaskResume(xHandleTask_BottomStepper);
 					angle[0] = 60;
 					targetSpeedY = 30;
 					high = 2;
@@ -345,13 +347,14 @@ static void	vTask_Control(void *pvParameters)
 				else if(work_times == 5){
 					bottom_stepper_turn(120);
 					angle[0] += 120;
-					vTaskResume(xHandleTask_BottomStepper);
+					//vTaskResume(xHandleTask_BottomStepper);
 					targetSpeedY = 30;
-					vTaskSuspend(xHandleTask_CCD1);
+//					vTaskSuspend(xHandleTask_CCD1);
 				}
 				else if(work_times ==6){
 					printf("start_turn\r\n");
 					//转90度弯
+					vTaskSuspend(xHandleTask_CCD1);
 					vTaskSuspend(xHandleTask_CCD2);	//关闭线程CCD2
 					targetSpeedY = -20;
 					vTaskDelay(500);
@@ -375,10 +378,10 @@ static void	vTask_Control(void *pvParameters)
 
 					angle[0] = 0;
 					bottom_stepper_turn(angle[1]+65);
-					vTaskResume(xHandleTask_BottomStepper);
+					//vTaskResume(xHandleTask_BottomStepper);
 					while(UD_stepper_judge)
 						vTaskDelay(5);
-					targetSpeedY = 45;
+					targetSpeedY = 50;
 					UD_stepper_turn(TWO_FLOAT_HIGH);
 					vTaskResume(xHandleTask_UDStepper);
 					while(UD_stepper_judge)
@@ -386,7 +389,7 @@ static void	vTask_Control(void *pvParameters)
 				}
 				else{
 					bottom_stepper_turn(120);
-					vTaskResume(xHandleTask_BottomStepper);
+					//vTaskResume(xHandleTask_BottomStepper);
 					angle[0] += 120;
 					targetSpeedY = 30;
 				}	
@@ -406,7 +409,7 @@ static void	vTask_Control(void *pvParameters)
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
-				vTaskResume(xHandleTask_BottomStepper);
+				//vTaskResume(xHandleTask_BottomStepper);
 				while(bottom_stepper_judge)
 					vTaskDelay(5);
 				
@@ -425,7 +428,7 @@ static void	vTask_Control(void *pvParameters)
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
-				vTaskResume(xHandleTask_BottomStepper);
+//				vTaskResume(xHandleTask_BottomStepper);
 				
 			}
 //			else if(rev[0] == 0)
@@ -555,12 +558,10 @@ static void vTask_Mecanum(void *pvParameters)
 static void vTask_CCD2(void *pvParameters)
 {
 	TickType_t xLastWakeTime;
-	IO_Init();
 	CCD_Init();
 	vTaskSuspend(xHandleTask_CCD2);
 	for(;;)
 	{
-		myIO = !myIO;
 		CCD2_Collect();
 		//ccd_send_data(USART2, ccd2_data);
 
@@ -607,39 +608,39 @@ static void vTask_CCD1(void *pvParameters)
 }
 
 
-static void vTask_BottomStepper(void *pvParameters)
-{
-	Stepper_EN_Init();
-	Servo_Init();
-	vTaskDelay(5000);
-	GPIO_SetBits(GPIOB, GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12);
-	
-	Stepper_Init();
-	vTaskSuspend(xHandleTask_BottomStepper);
-	
-	for(;;)
-	{
-		if(bottom_stepper_judge)
-			PEout(5)=1;
-//		if(puzzer_)
-//			PEout(9)=1;
-		vTaskDelay(1);
-		PEout(5)=0;
-		PEout(9)=0;
-		vTaskDelay(1);
-		Bottom_Soft_IRQ();
-		if(!bottom_stepper_judge)
-		{
-			vTaskSuspend(xHandleTask_BottomStepper);
-		}
-	}
-}
+//static void vTask_BottomStepper(void *pvParameters)
+//{
+//	Stepper_EN_Init();
+//	Servo_Init();
+//	vTaskDelay(5000);
+//	GPIO_SetBits(GPIOB, GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12);
+//	
+//	Stepper_Init();
+//	vTaskSuspend(xHandleTask_BottomStepper);
+//	
+//	for(;;)
+//	{
+//		if(bottom_stepper_judge)
+//			PEout(5)=1;
+////		if(puzzer_)
+////			PEout(9)=1;
+//		vTaskDelay(1);
+//		PEout(5)=0;
+//		PEout(9)=0;
+//		vTaskDelay(1);
+//		Bottom_Soft_IRQ();
+//		if(!bottom_stepper_judge)
+//		{
+//			vTaskSuspend(xHandleTask_BottomStepper);
+//		}
+//	}
+//}
 
 static void vTask_RLStepper(void *pvParameters)
 {
 	vTaskDelay(2000);
 	
-	Stepper_Init();
+	//Stepper_Init();
 	vTaskSuspend(xHandleTask_RLStepper);
 	
 	for(;;)
@@ -660,7 +661,7 @@ static void vTask_RLStepper(void *pvParameters)
 static void vTask_UDStepper(void *pvParameters)
 {
 	vTaskDelay(2000);
-	
+	GPIO_SetBits(GPIOB, GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12);
 	vTaskSuspend(xHandleTask_UDStepper);
 	
 	for(;;)
@@ -742,7 +743,7 @@ static void GrabMilk(int a)
 		vTaskResume(xHandleTask_UDStepper);
 		while(UD_stepper_judge)
 			vTaskDelay(5);
-		RL_stepper_turn(RL1);
+		RL_stepper_turn(RL1+50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
@@ -756,7 +757,7 @@ static void GrabMilk(int a)
 //		OSTaskResume(&AppTask_UD_Stepper_TCB, &err);
 //		while(UD_stepper_judge)
 //			OSTimeDlyHMSM(0u, 0u, 0u, 5u, OS_OPT_TIME_HMSM_STRICT, &err);
-		RL_stepper_turn(-RL1);
+		RL_stepper_turn(-RL1-50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
@@ -785,7 +786,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 		while(RL_stepper_judge)
 			vTaskDelay(5);
 		bottom_stepper_turn(-10);
-		vTaskResume(xHandleTask_BottomStepper);
+//		vTaskResume(xHandleTask_BottomStepper);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
 //		UD_stepper_turn(-750);
@@ -821,12 +822,12 @@ static void PutDownMilk(int a, int b)//初始高度5000
 //			vTaskDelay(5);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
-		RL_stepper_turn(RL1+50);
+		RL_stepper_turn(RL1+80);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
 		bottom_stepper_turn(-10);
-		vTaskResume(xHandleTask_BottomStepper);
+//		vTaskResume(xHandleTask_BottomStepper);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
 //		UD_stepper_turn(UD);
@@ -841,7 +842,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 		while(UD_stepper_judge)
 			vTaskDelay(5);
 		
-		RL_stepper_turn(-RL1-50);
+		RL_stepper_turn(-RL1-80);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
@@ -908,12 +909,12 @@ static void AppTaskCreate (void)
                  &xHandleTask_CCD1 );
 				 
 				 
-	xTaskCreate( vTask_BottomStepper,
-                 "vTask Bottom Stepper",
-                 512,
-                 NULL,
-                 vTask_BottomStepper_PRIO,
-                 &xHandleTask_BottomStepper );
+//	xTaskCreate( vTask_BottomStepper,
+//                 "vTask Bottom Stepper",
+//                 512,
+//                 NULL,
+//                 vTask_BottomStepper_PRIO,
+//                 &xHandleTask_BottomStepper );
 	
 	xTaskCreate( vTask_RLStepper,
                  "vTask RL Stepper",
