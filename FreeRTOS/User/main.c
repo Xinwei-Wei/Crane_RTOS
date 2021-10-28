@@ -113,12 +113,13 @@ int bottom_stepper_judge = 0, RL_stepper_judge = 0, UD_stepper_judge = 0, steppe
 int control_step = 1;
 int angle[8]={0,-1,-1,-1,-1,-1,-1,0};
 int bottom_turn_judge = 1;
-int stop_judge = 0, USART_judge = 0, slow_down_judge = 0, guess_judge[6] = {0};
+int stop_judge = 0, USART_judge = 0, slow_down_judge = 0;
 int target_center1 = 68, target_center2 = 64;
 float CCD1_p = 0.5, CCD2_p = 1.5;
 int a = 37;
 int work_times = -1;
-int guess_angle[6] = {2,3,5,1,4,6};
+int guess_angle[6] = {-1};
+int guess_time = 0;
 extern int EN_EN_stop;
 
 /*
@@ -322,14 +323,16 @@ static void	vTask_Control(void *pvParameters)
 				i = 0;				
 				while(!USART_judge){
 					vTaskDelay(10);
-					//i++;					
-//					if(i > 500){
-//						rev[0] = guess_angle[work_times-1];
-//						break;
-//					}
+					i++;					
+					if(i > 500){
+						guess_angle[guess_time] = angle[0];
+						guess_time++;
+						vTaskSuspend(xHandleTask_Receive);
+						break;						
+					}
 				}
-				//OSTaskSuspend(&AppTask_Receive_TCB, &err);
-				USART_judge = 0;		
+				
+				USART_judge = 0;
 				
 //				printf("grab\r\n");
 //				if(!guess_judge[work_times-1]){
@@ -352,8 +355,13 @@ static void	vTask_Control(void *pvParameters)
 //					vTaskSuspend(xHandleTask_CCD1);
 				}
 				else if(work_times ==6){
-					printf("start_turn\r\n");
-					//转90度弯
+					j = 1;
+					for(i=0;i<guess_time;i++){
+						while(angle[j] != -1){
+							j++;
+						}
+						angle[j] = guess_angle[i];
+					}
 					vTaskSuspend(xHandleTask_CCD1);
 					vTaskSuspend(xHandleTask_CCD2);	//关闭线程CCD2
 					targetSpeedY = -20;
@@ -372,7 +380,7 @@ static void	vTask_Control(void *pvParameters)
 					}
 					
 					vTaskResume(xHandleTask_CCD1);
-					targetSpeedY = 50;
+					targetSpeedY = 60;
 					vTaskDelay(1000);
 					vTaskResume(xHandleTask_CCD2);
 
@@ -381,7 +389,7 @@ static void	vTask_Control(void *pvParameters)
 					//vTaskResume(xHandleTask_BottomStepper);
 					while(UD_stepper_judge)
 						vTaskDelay(5);
-					targetSpeedY = 50;
+					targetSpeedY = 60;
 					UD_stepper_turn(TWO_FLOAT_HIGH);
 					vTaskResume(xHandleTask_UDStepper);
 					while(UD_stepper_judge)
@@ -715,7 +723,7 @@ static void GrabMilk(int a)
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
-		vTaskDelay(500);
+		vTaskDelay(100);
 		UD_stepper_turn(-UD1);
 		vTaskResume(xHandleTask_UDStepper);
 		while(UD_stepper_judge)

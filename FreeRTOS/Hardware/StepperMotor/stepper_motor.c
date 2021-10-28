@@ -199,12 +199,12 @@ void TIM1_BRK_TIM9_IRQHandler(void)
 			bottom_stepper_count = 0;
 			bottom_stepper_judge = 0;	
 		}
-		else if(bottom_stepper_count > bottom_angle_count-40*bottom_bu_to_angle){
-			bottom_v -= 0.05;
+		else if(bottom_stepper_count > bottom_angle_count-450*bottom_bu_to_angle){
+			bottom_v -= 0.01;
 		}
 		else{
 			if(bottom_v<5){
-				bottom_v += 0.05;
+				bottom_v += 0.01;
 			}
 		}
 		tem_arr = (int)(10000/bottom_v - 1);

@@ -282,9 +282,15 @@ int CCD1_find_Line(int center, int threshold)
 		edge_right = i-3;
 		edge_count = 0;
 		
-		if(edge_right - edge_left > line5_wide || edge_left < 5)
+		if(targetSpeedY>40){
+			if(edge_right - edge_left>line5_wide)
+			{
+				slow_down_judge = 1;
+			}
+		}
+		if(edge_left < 5)
 		{
-			return center;
+			return 64;
 		}
 		
 		center = (edge_left + edge_right) / 2 + 0.5;
@@ -367,15 +373,12 @@ int CCD2_find_Line(int center, int threshold)
 						//EN_EN_stop = 0;
 						//targetSpeedY = 20;
 						slow_down_judge = 1;
-						longest = 50;
 					}
 				}
 				else
 				{	
-					if(edge_right - edge_left < longest){
-						EN_EN_stop = 0;					
-						EN_stop = 1;
-					}
+					EN_EN_stop = 0;					
+					EN_stop = 1;
 				}
 			}	
 			time = 0;
