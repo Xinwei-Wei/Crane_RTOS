@@ -296,9 +296,10 @@ static void	vTask_Control(void *pvParameters)
 		{
 			work_times++;
 			if(work_times==0){
-				stop_judge = 0;
+				stop_judge = 0;				
 				UD_stepper_turn(-UD1);
 				vTaskResume(xHandleTask_UDStepper);
+				targetSpeedY = 30;
 				while(UD_stepper_judge)
 					vTaskDelay(5);
 				targetSpeedY = 30;
@@ -509,8 +510,8 @@ static void vTask_Mecanum(void *pvParameters)
 		//printf("x:%.2f y:%.2f w:%.2f\r\n",targetSpeedX, targetSpeedY, targetSpeedW);
 		tem_w = targetSpeedW > 0 ? targetSpeedW : -targetSpeedW;
 		if(targetSpeedY>0){
-			if(targetSpeedY > tem_w/2){
-				targetMecanum = moto_caculate(targetSpeedX, targetSpeedY - tem_w/2, targetSpeedW);
+			if(targetSpeedY > tem_w*0.4){
+				targetMecanum = moto_caculate(targetSpeedX, targetSpeedY - tem_w*0.4, targetSpeedW);
 			}
 			else{
 				targetMecanum = moto_caculate(targetSpeedX, 0, targetSpeedW);
