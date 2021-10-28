@@ -285,8 +285,7 @@ static void	vTask_Control(void *pvParameters)
 				vTaskDelay(10);	
 				while(targetSpeedW || targetSpeedX)
 					vTaskDelay(10);			
-				targetSpeedY = 30;
-				vTaskDelay(2000);
+				targetSpeedY = 20;
 			}
 //			else{
 //				targetSpeedY = 45;
@@ -404,9 +403,7 @@ static void	vTask_Control(void *pvParameters)
 			}
 			else
 			{
-				if(work_times == 8){
-					vTaskSuspend(xHandleTask_CCD1);
-				}
+				
 				stop_judge = 0;
 				targetSpeedY = 0;
 				printf("stop\r\n");
@@ -436,6 +433,9 @@ static void	vTask_Control(void *pvParameters)
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
+//				if(work_times == 8){
+//					vTaskSuspend(xHandleTask_CCD1);
+//				}
 //				vTaskResume(xHandleTask_BottomStepper);
 				
 			}
@@ -789,7 +789,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 			vTaskDelay(5);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
-		RL_stepper_turn(RL1);
+		RL_stepper_turn(RL1+50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
@@ -807,7 +807,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 		vTaskResume(xHandleTask_UDStepper);
 		while(UD_stepper_judge)
 			vTaskDelay(5);
-		RL_stepper_turn(-RL1);
+		RL_stepper_turn(-RL1-50);
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);

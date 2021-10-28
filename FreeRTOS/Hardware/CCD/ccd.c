@@ -290,7 +290,7 @@ int CCD1_find_Line(int center, int threshold)
 		}
 		if(edge_left < 5)
 		{
-			return 64;
+			return 66;
 		}
 		
 		center = (edge_left + edge_right) / 2 + 0.5;
