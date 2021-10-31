@@ -9,7 +9,7 @@
 #define RIGHT_TO_LEFT 2700
 
 #define MILK_HIGH 600
-#define ONE_FLOAT_HIGH 700
+#define ONE_FLOAT_HIGH 696
 #define TWO_FLOAT_HIGH 1450
 #define UD1 350
 #define UD2 500

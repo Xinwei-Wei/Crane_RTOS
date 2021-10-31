@@ -22,6 +22,7 @@ u16 ccd2_data[128];
 u8 stop_line = line5_wide;
 extern float targetSpeedY;
 extern int stop_judge, slow_down_judge;
+extern int en_slow_dowm;
 int EN_stop = 0, EN_EN_stop = 0;
 int longest = 1000;
 
@@ -283,9 +284,11 @@ int CCD1_find_Line(int center, int threshold)
 		edge_count = 0;
 		
 		if(targetSpeedY>40){
-			if(edge_right - edge_left>line5_wide)
+			if(edge_right - edge_left>line5_wide);
 			{
-				slow_down_judge = 1;
+				if(en_slow_dowm){
+					slow_down_judge = 1;
+				}
 			}
 		}
 		if(edge_left < 5)

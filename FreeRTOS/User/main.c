@@ -45,6 +45,7 @@
 #define		vTask_BottomStepper_PRIO	3
 #define		vTask_RLStepper_PRIO		3
 #define		vTask_UDStepper_PRIO		3
+#define		vTask_SingleJudge_PRIO		0
 
 /*
 **********************************************************************************************************
@@ -62,6 +63,7 @@ static	void	vTask_CCD1			(void *pvParameters);
 static	void	vTask_RLStepper		(void *pvParameters);
 static	void	vTask_UDStepper		(void *pvParameters);
 static	void	vTask_Control		(void *pvParameters);
+static	void	vTask_SingleJudge		(void *pvParameters);
 
 /*
 **********************************************************************************************************
@@ -78,6 +80,7 @@ static	TaskHandle_t	xHandleTask_CCD1			= NULL;
 static	TaskHandle_t	xHandleTask_RLStepper		= NULL;
 static	TaskHandle_t	xHandleTask_UDStepper		= NULL;
 static	TaskHandle_t	xHandleTask_Control			= NULL;
+static	TaskHandle_t	xHandleTask_SingleJudge		= NULL;
 
 /*
 **********************************************************************************************************
@@ -121,6 +124,7 @@ int work_times = -1;
 int guess_angle[6] = {-1};
 int guess_time = 0;
 extern int EN_EN_stop;
+int en_slow_dowm = 0;
 
 /*
 *********************************************************************************************************
@@ -182,6 +186,10 @@ void Periph_Init()
 											    用户任务
 **********************************************************************************************************
 */
+static void vTask_SingleJudge(void *pvParameters){
+	vTaskDelay(120000);
+	en_slow_dowm = 1;
+}
 
 static void vTask_Receive(void *pvParameters)
 {
@@ -328,15 +336,16 @@ static void	vTask_Control(void *pvParameters)
 						guess_angle[guess_time] = angle[0];
 						guess_time++;
 						vTaskSuspend(xHandleTask_Receive);
+						rev[0] = 0;
 						break;						
 					}
 				}
 				
 				USART_judge = 0;
-				
+				angle[rev[0]] = angle[0];
 //				printf("grab\r\n");
 //				if(!guess_judge[work_times-1]){
-				angle[rev[0]] = angle[0];
+				
 //				}
 				GrabMilk(high);
 				vTaskDelay(1000);
@@ -411,7 +420,7 @@ static void	vTask_Control(void *pvParameters)
 				
 				PutDownMilk(((angle[2*(work_times-6)-1]/60)%2+1) , 1);
 				//取余-360
-				tem_angle = angle[2*(work_times-6)]-angle[2*(work_times-6)-1]+10;
+				tem_angle = angle[2*(work_times-6)]-angle[2*(work_times-6)-1]+12;
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
@@ -429,8 +438,16 @@ static void	vTask_Control(void *pvParameters)
 				
 				if(work_times<9)
 					targetSpeedY = 20;
+				else{
+					vTaskSuspend(xHandleTask_CCD1);
+					vTaskSuspend(xHandleTask_CCD2);
+					targetSpeedX = -45;
+					vTaskDelay(2000);
+					targetSpeedX = 0;
+					
+				}
 				
-				tem_angle = angle[2*(work_times-6)+1]-angle[2*(work_times-6)]+10;
+				tem_angle = angle[2*(work_times-6)+1]-angle[2*(work_times-6)]+12;
 				if(tem_angle > 180)tem_angle -= 360;
 				if(tem_angle < -180)tem_angle += 360;
 				bottom_stepper_turn(tem_angle);
@@ -794,7 +811,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
-		bottom_stepper_turn(-10);
+		bottom_stepper_turn(-12);
 //		vTaskResume(xHandleTask_BottomStepper);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
@@ -835,7 +852,7 @@ static void PutDownMilk(int a, int b)//初始高度5000
 		vTaskResume(xHandleTask_RLStepper);
 		while(RL_stepper_judge)
 			vTaskDelay(5);
-		bottom_stepper_turn(-10);
+		bottom_stepper_turn(-12);
 //		vTaskResume(xHandleTask_BottomStepper);
 		while(bottom_stepper_judge)
 			vTaskDelay(5);
